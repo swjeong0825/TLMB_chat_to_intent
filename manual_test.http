@@ -1,0 +1,221 @@
+# ============================================================
+# Tennis League Chatbot — Chat-to-Intent Server
+# Manual test file (REST Client / IntelliJ HTTP Client)
+#
+# Prerequisites:
+#   - Server running: uvicorn app.main:app --reload
+#   - Replace {{league_id}} and {{host_token}} with real values
+#     (or set them in an http-client.env.json / .env file)
+# ============================================================
+
+@baseUrl     = http://localhost:8000
+@league_id   = d909cf3b-96b5-4ee2-b706-828b22dcbacf
+@host_token  = 252b610f-2e68-4e72-b00c-ca2ab43d55be
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+### Health check
+GET {{baseUrl}}/health
+
+
+# ============================================================
+# READ INTENTS
+# ============================================================
+
+### GET_STANDINGS — "show me the standings"
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "Show me the current standings",
+  "last_server_message": ""
+}
+
+###
+
+### GET_STANDINGS — with host token (authenticated)
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "What are the standings?",
+  "last_server_message": ""
+}
+
+###
+
+### GET_ROSTER — "who's on the roster?"
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "Who are the players in the league?",
+  "last_server_message": ""
+}
+
+###
+
+### GET_MATCH_HISTORY — "show me past matches"
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "Show me the match history",
+  "last_server_message": ""
+}
+
+
+# ============================================================
+# WRITE INTENTS
+# (Server returns a prefilled payload for the frontend to submit.
+#  The response includes data_type, data.method, data.url, data.body.)
+# ============================================================
+
+### SUBMIT_MATCH_RESULT — all info in one message
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Alice and Bob beat Charlie and Dave 6-3",
+  "last_server_message": ""
+}
+
+###
+
+### SUBMIT_MATCH_RESULT — multi-turn: user provides score after clarification
+# Step 1 — user sends incomplete message (no score)
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Alice and Bob vs Charlie and Dave",
+  "last_server_message": ""
+}
+
+###
+
+# Step 2 — user answers the clarification question
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "6-3",
+  "last_server_message": "Who won, and what was the score?"
+}
+
+###
+
+### EDIT_MATCH_SCORE — all info in one message
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Fix the score for Alice and Bob vs Charlie and Dave — it should be 6-4 not 6-3",
+  "last_server_message": ""
+}
+
+###
+
+### EDIT_PLAYER_NICKNAME — rename a player
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Change Alice's nickname to Alicia",
+  "last_server_message": ""
+}
+
+###
+
+### EDIT_PLAYER_NICKNAME — multi-turn: user provides new nickname after clarification
+# Step 1
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "I want to rename Alice",
+  "last_server_message": ""
+}
+
+###
+
+# Step 2
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Alicia",
+  "last_server_message": "What should the new nickname be?"
+}
+
+###
+
+### DELETE_MATCH — identify match by four player nicknames
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Delete the match between Alice and Bob vs Charlie and Dave",
+  "last_server_message": ""
+}
+
+###
+
+### DELETE_TEAM — identify team by both player nicknames
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Remove the team Alice and Bob from the league",
+  "last_server_message": ""
+}
+
+
+# ============================================================
+# EDGE CASES
+# ============================================================
+
+### Ambiguous message — expect CLARIFICATION_QUESTION response
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "help",
+  "last_server_message": ""
+}
+
+###
+
+### Missing host token on a write intent — server still returns payload,
+### but the downstream admin call will likely be rejected by the backend
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "Alice and Bob beat Charlie and Dave 6-3",
+  "last_server_message": ""
+}
+
+###
+
+### Invalid league_id — backend will return 4xx, server wraps as 502 ERROR
+POST {{baseUrl}}/leagues/00000000-0000-0000-0000-000000000000/chat
+Content-Type: application/json
+
+{
+  "client_message": "Show me the standings",
+  "last_server_message": ""
+}
