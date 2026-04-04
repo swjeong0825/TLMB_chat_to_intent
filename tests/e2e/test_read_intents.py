@@ -93,10 +93,11 @@ class TestGetMatchHistory:
     async def test_match_history_entry_shape(self, client: AsyncClient, league_id: str):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            json={"client_message": "what were the recent results?", "last_server_message": ""},
+            json={"client_message": "show me the match history", "last_server_message": ""},
         )
         assert response.status_code == 200
         body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY"
         matches = body["data"]["matches"]
         if matches:
             m = matches[0]

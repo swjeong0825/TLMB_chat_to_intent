@@ -73,12 +73,23 @@ class IntentIdentifier:
                 )
                 return IntentIdentificationResult.low(question)
 
-            # Hard gate: intent name must match a registered intent
+            # Hard gate: intent name must match a registered intent.
+            # If the LLM returns an unrecognized name (e.g. "UNDEFINED"), treat it as
+            # LOW confidence and ask a clarification question rather than returning an error.
             intent = IntentRegistry.get(intent_name)
             if intent is None:
-                raise UnresolvableIntentException(
-                    f"LLM returned unrecognized intent name: '{intent_name}'"
+                logger.warning(
+                    "LLM returned unrecognized intent name: '%s', treating as LOW confidence",
+                    intent_name,
                 )
+                question = (
+                    clarification_question.strip()
+                    if clarification_question and clarification_question.strip()
+                    else await self._generate_clarification_question(
+                        client_message, last_server_message
+                    )
+                )
+                return IntentIdentificationResult.low(question)
 
             is_high = confidence >= intent.confidence_threshold
             if is_high:

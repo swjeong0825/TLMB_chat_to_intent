@@ -46,3 +46,5 @@ http-client.private.env.json
 .vscode/
 *.swp
 *.swo
+
+commands.txt

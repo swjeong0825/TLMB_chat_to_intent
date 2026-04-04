@@ -95,7 +95,7 @@ class IntentRegistry:
             intent_type=IntentType.WRITE,
             confidence_threshold=75,
             required_request_params=[_LEAGUE_ID_PARAM],
-            required_chat_params=[
+            optional_chat_params=[
                 ParamDef("team1_player1_nickname", str, "Nickname of the first player on team 1"),
                 ParamDef("team1_player2_nickname", str, "Nickname of the second player on team 1"),
                 ParamDef("team2_player1_nickname", str, "Nickname of the first player on team 2"),

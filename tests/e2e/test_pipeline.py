@@ -51,11 +51,13 @@ class TestClarificationFlow:
         assert response.status_code == 200
         body = response.json()
         # Should be clarification (multi-action) — may sometimes resolve to one intent
-        # so we accept either CLARIFICATION_QUESTION or a valid single intent
+        # so we accept either CLARIFICATION_QUESTION or a valid single intent.
+        # If resolved to an admin intent without a host_token, ERROR(400) is also valid.
         assert body["data_type"] in (
             "CLARIFICATION_QUESTION",
             "GET_STANDINGS",
             "DELETE_TEAM",
+            "ERROR",
         )
 
     async def test_clarification_followup_resolves_intent(

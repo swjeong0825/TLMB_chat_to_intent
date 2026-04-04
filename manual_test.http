@@ -87,6 +87,19 @@ X-Host-Token: {{host_token}}
 
 ###
 
+
+### SUBMIT_MATCH_RESULT — no info. Should still return the payload without default value
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Jae+Jazz 6:4 DK+Casper",
+  "last_server_message": ""
+}
+
+###
+
 ### SUBMIT_MATCH_RESULT — multi-turn: user provides score after clarification
 # Step 1 — user sends incomplete message (no score)
 POST {{baseUrl}}/leagues/{{league_id}}/chat
