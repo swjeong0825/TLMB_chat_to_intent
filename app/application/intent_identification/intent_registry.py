@@ -72,6 +72,33 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
+            name="GET_MATCH_HISTORY_BY_PLAYER",
+            intent_type=IntentType.READ,
+            confidence_threshold=70,
+            required_request_params=[_LEAGUE_ID_PARAM],
+            required_chat_params=[
+                ParamDef(
+                    "player_name",
+                    str,
+                    "The player's nickname to look up match history for",
+                ),
+            ],
+            description=(
+                "The user wants to see the match history for a specific named player. "
+                "A player name is clearly mentioned in the message. "
+                "Use GET_MATCH_HISTORY instead when no specific player is mentioned."
+            ),
+            example_messages=[
+                "show me Alice's match history",
+                "what matches has Bob played?",
+                "show me the games for Charlie",
+                "what are Alice's results?",
+                "matches involving Bob",
+                "how has Diana been performing?",
+            ],
+        ),
+
+        IntentDefinition(
             name="GET_ROSTER",
             intent_type=IntentType.READ,
             confidence_threshold=70,

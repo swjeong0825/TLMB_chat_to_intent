@@ -151,3 +151,71 @@ class TestGetRoster:
         assert body["data_type"] == "GET_ROSTER"
         teams = body["data"]["teams"]
         assert len(teams) >= 2
+
+
+# ---------------------------------------------------------------------------
+# GET_MATCH_HISTORY_BY_PLAYER
+# ---------------------------------------------------------------------------
+
+@pytest.mark.usefixtures("seeded_league")
+class TestGetMatchHistoryByPlayer:
+
+    async def test_show_player_match_history(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "show me Alice's match history", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
+        assert "matches" in body["data"]
+        assert isinstance(body["data"]["matches"], list)
+
+    async def test_player_name_extracted_correctly(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "show me Alice's match history", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
+        # player_name is echoed back in the response data
+        assert body["data"]["player_name"].lower() == "alice"
+
+    async def test_seeded_player_has_expected_matches(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "what matches has Alice played?", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
+        matches = body["data"]["matches"]
+        # Alice played in both seeded matches
+        assert len(matches) >= 2
+
+    async def test_match_history_entry_shape(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "show me Bob's results", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
+        matches = body["data"]["matches"]
+        if matches:
+            m = matches[0]
+            assert "match_id" in m
+            assert "team1_player1_nickname" in m
+            assert "team1_score" in m
+            assert "team2_score" in m
+
+    async def test_phrase_variant(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "what games has Charlie played?", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
+        assert body["data"]["player_name"].lower() == "charlie"
