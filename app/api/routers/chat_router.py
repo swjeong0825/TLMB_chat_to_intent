@@ -17,7 +17,7 @@ async def chat(
 ) -> ChatResponse:
     return await chat_handler.handle(
         client_message=request.client_message,
-        last_server_message=request.last_server_message,
+        conversation_history=[t.model_dump() for t in request.conversation_history],
         league_id=league_id,
         host_token=x_host_token,
     )

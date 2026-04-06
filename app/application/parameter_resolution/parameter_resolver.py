@@ -30,6 +30,7 @@ class ParameterResolver:
         self,
         intent: IntentDefinition,
         client_message: str,
+        conversation_history: list[dict],
         league_id: str,
         host_token: str | None,
     ) -> ResolvedParams:
@@ -37,7 +38,7 @@ class ParameterResolver:
         params = self._request_validator.validate(intent, league_id, host_token)
 
         # Sub-layer 2: LLM extraction of chat-driven params (best-effort, no errors)
-        extracted = await self._chat_extractor.extract(intent, client_message)
+        extracted = await self._chat_extractor.extract(intent, client_message, conversation_history)
 
         # Sub-layer 3: validate extracted chat params (raises on missing required)
         self._chat_validator.validate(intent, extracted, params)

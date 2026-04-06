@@ -41,14 +41,14 @@ class ChatHandler:
     async def handle(
         self,
         client_message: str,
-        last_server_message: str,
+        conversation_history: list[dict],
         league_id: str,
         host_token: str | None,
     ) -> ChatResponse:
         try:
             # Step 1: classify intent
             identification = await self._intent_identifier.identify(
-                client_message, last_server_message
+                client_message, conversation_history
             )
 
             # Step 2: short-circuit on LOW confidence
@@ -59,6 +59,7 @@ class ChatHandler:
             params = await self._parameter_resolver.resolve(
                 intent=identification.intent,
                 client_message=client_message,
+                conversation_history=conversation_history,
                 league_id=league_id,
                 host_token=host_token,
             )

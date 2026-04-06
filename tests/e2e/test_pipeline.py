@@ -63,21 +63,24 @@ class TestClarificationFlow:
     async def test_clarification_followup_resolves_intent(
         self, client: AsyncClient, league_id: str
     ):
-        """After a clarification question, re-sending with last_server_message resolves intent."""
+        """After a clarification question, re-sending with conversation_history resolves intent."""
         # Step 1: send ambiguous message
         r1 = await client.post(
             f"/leagues/{league_id}/chat",
-            json={"client_message": "hey", "last_server_message": ""},
+            json={"client_message": "hey", "conversation_history": []},
         )
         assert r1.status_code == 200
         clarification_question = r1.json()["data"].get("question", "")
 
-        # Step 2: reply to clarification with a clear intent
+        # Step 2: reply to clarification, carrying both turns in conversation_history
         r2 = await client.post(
             f"/leagues/{league_id}/chat",
             json={
                 "client_message": "show me the standings",
-                "last_server_message": clarification_question,
+                "conversation_history": [
+                    {"role": "user", "content": "hey"},
+                    {"role": "assistant", "content": clarification_question},
+                ],
             },
         )
         assert r2.status_code == 200

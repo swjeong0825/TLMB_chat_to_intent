@@ -18,7 +18,10 @@ class ChatParamsExtractor:
         self._llm = llm_provider
 
     async def extract(
-        self, intent: IntentDefinition, client_message: str
+        self,
+        intent: IntentDefinition,
+        client_message: str,
+        conversation_history: list[dict] | None = None,
     ) -> dict[str, object]:
         all_chat_params: list[ParamDef] = (
             intent.required_chat_params + intent.optional_chat_params
@@ -28,7 +31,8 @@ class ChatParamsExtractor:
             return {}
 
         system_prompt = self._build_extraction_system_prompt(intent, all_chat_params)
-        raw_response = await self._llm.complete(system_prompt, client_message)
+        context_message = self._build_context_message(client_message, conversation_history or [])
+        raw_response = await self._llm.complete(system_prompt, context_message)
 
         try:
             extracted = json.loads(raw_response)
@@ -39,6 +43,19 @@ class ChatParamsExtractor:
         except Exception as e:
             logger.warning("Failed to parse LLM extraction response: %s", e)
             return {param.name: None for param in all_chat_params}
+
+    def _build_context_message(
+        self, client_message: str, conversation_history: list[dict]
+    ) -> str:
+        if not conversation_history:
+            return client_message
+        lines = ["Conversation history:"]
+        for turn in conversation_history:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            lines.append(f"[{role}]: {content}")
+        lines.append(f"\nCurrent message: {client_message}")
+        return "\n".join(lines)
 
     def _build_extraction_system_prompt(
         self, intent: IntentDefinition, params: list[ParamDef]

@@ -49,10 +49,10 @@ class IntentIdentifier:
         self._llm = llm_provider
 
     async def identify(
-        self, client_message: str, last_server_message: str
+        self, client_message: str, conversation_history: list[dict]
     ) -> IntentIdentificationResult:
         system_prompt = self._build_classification_system_prompt()
-        user_message = self._build_classification_user_message(client_message, last_server_message)
+        user_message = self._build_classification_user_message(client_message, conversation_history)
 
         raw_response = await self._llm.complete(system_prompt, user_message)
 
@@ -68,7 +68,7 @@ class IntentIdentifier:
                     clarification_question.strip()
                     if clarification_question and clarification_question.strip()
                     else await self._generate_clarification_question(
-                        client_message, last_server_message
+                        client_message, conversation_history
                     )
                 )
                 return IntentIdentificationResult.low(question)
@@ -86,7 +86,7 @@ class IntentIdentifier:
                     clarification_question.strip()
                     if clarification_question and clarification_question.strip()
                     else await self._generate_clarification_question(
-                        client_message, last_server_message
+                        client_message, conversation_history
                     )
                 )
                 return IntentIdentificationResult.low(question)
@@ -98,7 +98,7 @@ class IntentIdentifier:
             question = (
                 clarification_question.strip()
                 if clarification_question and clarification_question.strip()
-                else await self._generate_clarification_question(client_message, last_server_message)
+                else await self._generate_clarification_question(client_message, conversation_history)
             )
             return IntentIdentificationResult.low(question)
 
@@ -141,17 +141,20 @@ class IntentIdentifier:
         return "\n".join(lines)
 
     def _build_classification_user_message(
-        self, client_message: str, last_server_message: str
+        self, client_message: str, conversation_history: list[dict]
     ) -> str:
-        if last_server_message and last_server_message.strip():
-            return (
-                f"Previous clarification question: {last_server_message}\n"
-                f"User reply: {client_message}"
-            )
-        return client_message
+        if not conversation_history:
+            return client_message
+        lines = ["Conversation history:"]
+        for turn in conversation_history:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            lines.append(f"[{role}]: {content}")
+        lines.append(f"\nCurrent message: {client_message}")
+        return "\n".join(lines)
 
     async def _generate_clarification_question(
-        self, client_message: str, last_server_message: str
+        self, client_message: str, conversation_history: list[dict]
     ) -> str:
         system_prompt = (
             "You are an assistant for a tennis league chatbot. The user's message was ambiguous "
@@ -159,11 +162,7 @@ class IntentIdentifier:
             "what action the user wants to perform.\n\n"
             'Respond ONLY with valid JSON in this exact format: {"question": "<your question here>"}'
         )
-        user_message = (
-            f"Previous question: {last_server_message}\nUser message: {client_message}"
-            if last_server_message and last_server_message.strip()
-            else client_message
-        )
+        user_message = self._build_classification_user_message(client_message, conversation_history)
         raw = await self._llm.complete(system_prompt, user_message)
         try:
             parsed = json.loads(raw)
