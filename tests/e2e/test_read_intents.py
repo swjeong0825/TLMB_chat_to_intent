@@ -1,5 +1,5 @@
 """
-E2E tests for Read intents: GET_STANDINGS, GET_MATCH_HISTORY, GET_ROSTER.
+E2E tests for Read intents: GET_STANDINGS, GET_STANDINGS_BY_PLAYER, GET_MATCH_HISTORY, GET_ROSTER.
 
 These tests send real natural-language messages to the chat endpoint, hit the
 real Groq API for intent classification, and fetch real data from the backend.
@@ -219,3 +219,45 @@ class TestGetMatchHistoryByPlayer:
         body = response.json()
         assert body["data_type"] == "GET_MATCH_HISTORY_BY_PLAYER"
         assert body["data"]["player_name"].lower() == "charlie"
+
+
+# ---------------------------------------------------------------------------
+# GET_STANDINGS_BY_PLAYER
+# ---------------------------------------------------------------------------
+
+@pytest.mark.usefixtures("seeded_league")
+class TestGetStandingsByPlayer:
+
+    async def test_player_standings_intent(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={
+                "client_message": "what's Alice's rank in the league?",
+                "last_server_message": "",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_STANDINGS_BY_PLAYER"
+        assert "standings" in body["data"]
+        assert isinstance(body["data"]["standings"], list)
+        assert body["data"]["player_name"].lower() == "alice"
+
+    async def test_standings_by_player_entry_shape(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={
+                "client_message": "where does Bob's team stand in the standings?",
+                "last_server_message": "",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_STANDINGS_BY_PLAYER"
+        standings = body["data"]["standings"]
+        if standings:
+            row = standings[0]
+            assert "rank" in row
+            assert "wins" in row
+            assert "losses" in row
+            assert "team_id" in row

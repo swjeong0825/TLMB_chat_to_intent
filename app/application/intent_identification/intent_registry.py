@@ -72,6 +72,34 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
+            name="GET_STANDINGS_BY_PLAYER",
+            intent_type=IntentType.READ,
+            confidence_threshold=70,
+            required_request_params=[_LEAGUE_ID_PARAM],
+            required_chat_params=[
+                ParamDef(
+                    "player_name",
+                    str,
+                    "The player's nickname to look up their team's standing for",
+                ),
+            ],
+            description=(
+                "The user wants to see the win/loss standing (rank in the league) for the team "
+                "that includes a specific named player. A player name is clearly mentioned and "
+                "the focus is on standings/rank/position, not match-by-match history. "
+                "Use GET_STANDINGS when they want the full leaderboard with no player named. "
+                "Use GET_MATCH_HISTORY_BY_PLAYER when they ask for matches or results for a player."
+            ),
+            example_messages=[
+                "what's Alice's rank in the league?",
+                "where does Bob's team stand?",
+                "show me Charlie's standing",
+                "how is Diana doing in the standings?",
+                "what place is Emma's team?",
+            ],
+        ),
+
+        IntentDefinition(
             name="GET_MATCH_HISTORY_BY_PLAYER",
             intent_type=IntentType.READ,
             confidence_threshold=70,
@@ -86,7 +114,9 @@ class IntentRegistry:
             description=(
                 "The user wants to see the match history for a specific named player. "
                 "A player name is clearly mentioned in the message. "
-                "Use GET_MATCH_HISTORY instead when no specific player is mentioned."
+                "Use GET_MATCH_HISTORY instead when no specific player is mentioned. "
+                "Use GET_STANDINGS_BY_PLAYER when they ask for rank, standing, or leaderboard position "
+                "for that player's team rather than a list of matches."
             ),
             example_messages=[
                 "show me Alice's match history",

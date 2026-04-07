@@ -41,6 +41,7 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "https://tlmb.swjapps.com",
     "https://www.tlmb.swjapps.com",
+    # "http://localhost:3000",
 ]
 
 app.add_middleware(

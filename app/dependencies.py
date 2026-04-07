@@ -31,6 +31,7 @@ from app.intents.handlers.edit_player_nickname_handler import EditPlayerNickname
 from app.intents.handlers.get_match_history_by_player_handler import GetMatchHistoryByPlayerHandler
 from app.intents.handlers.get_match_history_handler import GetMatchHistoryHandler
 from app.intents.handlers.get_roster_handler import GetRosterHandler
+from app.intents.handlers.get_standings_by_player_handler import GetStandingsByPlayerHandler
 from app.intents.handlers.get_standings_handler import GetStandingsHandler
 from app.intents.handlers.submit_match_result_handler import SubmitMatchResultHandler
 from app.ports.llm_provider import LLMProvider
@@ -75,6 +76,7 @@ def _build_chat_handler() -> ChatHandler:
     # Intent handlers
     handler_registry: dict[str, BaseIntentHandler] = {
         "GET_STANDINGS": GetStandingsHandler(gateway),
+        "GET_STANDINGS_BY_PLAYER": GetStandingsByPlayerHandler(gateway),
         "GET_MATCH_HISTORY": GetMatchHistoryHandler(gateway),
         "GET_MATCH_HISTORY_BY_PLAYER": GetMatchHistoryByPlayerHandler(gateway),
         "GET_ROSTER": GetRosterHandler(gateway),
