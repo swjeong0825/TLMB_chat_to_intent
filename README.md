@@ -2,6 +2,8 @@
 
 LLM-powered intermediary for the **Tennis League Manager (TLM)** system. Receives natural-language chat messages from the frontend, classifies them into a registered intent using an LLM, and either fetches and returns domain data (read intents) or assembles a pre-filled form payload for the frontend to confirm and submit (write intents).
 
+**Live service:** [https://tlmb.swjapps.com](https://tlmb.swjapps.com)
+
 **Key design constraints:**
 - **Stateless** — no session or conversation history stored server-side; the client carries context via `last_server_message`.
 - **Read-only to the backend** — only calls `GET` endpoints on the TLM Backend; never issues write requests.
