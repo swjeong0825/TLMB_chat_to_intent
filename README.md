@@ -4,6 +4,10 @@ LLM-powered intermediary for the **Tennis League Manager (TLM)** system. Receive
 
 **Live service:** [https://tlmb.swjapps.com](https://tlmb.swjapps.com)
 
+**Demo video:** [Watch on YouTube](https://youtu.be/ba1-wXQDHOY)
+
+[![TLM Chat-to-Intent Demo](https://img.youtube.com/vi/ba1-wXQDHOY/maxresdefault.jpg)](https://youtu.be/ba1-wXQDHOY)
+
 **Key design constraints:**
 - **Stateless** — no session or conversation history stored server-side; the client carries context via `last_server_message`.
 - **Read-only to the backend** — only calls `GET` endpoints on the TLM Backend; never issues write requests.
