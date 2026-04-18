@@ -10,6 +10,7 @@ load_dotenv()
 
 from app.api.routers.chat_router import router as chat_router
 from app.dependencies import get_chat_handler
+from app.rate_limit import limiter, register_rate_limit_middleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,6 +52,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_rate_limit_middleware(app)
 
 app.include_router(chat_router)
 

@@ -22,6 +22,9 @@ from httpx import ASGITransport, AsyncClient
 # Load .env before importing the app (providers read env vars at import time)
 load_dotenv()
 
+# Tests hit the app in a tight loop; disable throttling so the suite stays deterministic.
+os.environ["RATELIMIT_ENABLED"] = "false"
+
 # Clear the lru_cache so each test session builds a fresh handler
 from app import dependencies
 dependencies._build_chat_handler.cache_clear()
