@@ -42,6 +42,7 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "https://tlmb.swjapps.com",
     "https://www.tlmb.swjapps.com",
+    "https://tlmb-test-site.swjeong0825.workers.dev"
     # "http://localhost:3000",
 ]
 
