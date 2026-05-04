@@ -43,14 +43,19 @@ class IntentRegistry:
             confidence_threshold=70,
             required_request_params=[_LEAGUE_ID_PARAM],
             description=(
-                "The user wants to see the current win/loss standings for all teams "
-                "in the league, ranked by wins."
+                "The user wants to see the league's current standings — the configured "
+                "ranking for the league (teams or players, in the league's tie-breaker "
+                "order). Some leagues rank by team and some by individual player; "
+                "either way, this intent returns the full leaderboard."
             ),
             example_messages=[
                 "show me the standings",
                 "who's winning the league?",
                 "what's the current leaderboard?",
                 "who's at the top of the table?",
+                "who has the most games?",
+                "individual leaderboard",
+                "show the player rankings",
             ],
         ),
 
@@ -80,15 +85,19 @@ class IntentRegistry:
                 ParamDef(
                     "player_name",
                     str,
-                    "The player's nickname to look up their team's standing for",
+                    "The player's nickname to look up their standing for",
                 ),
             ],
             description=(
-                "The user wants to see the win/loss standing (rank in the league) for the team "
-                "that includes a specific named player. A player name is clearly mentioned and "
-                "the focus is on standings/rank/position, not match-by-match history. "
-                "Use GET_STANDINGS when they want the full leaderboard with no player named. "
-                "Use GET_MATCH_HISTORY_BY_PLAYER when they ask for matches or results for a player."
+                "The user wants the standings row for a specific named player. "
+                "Depending on the league configuration this is either the player's "
+                "own row (player-ranked leagues) or their team's row (team-ranked "
+                "leagues); the backend selects the correct shape automatically. "
+                "A player name is clearly mentioned and the focus is on "
+                "standing/rank/position, not match-by-match history. "
+                "Use GET_STANDINGS when they want the full leaderboard with no "
+                "player named. Use GET_MATCH_HISTORY_BY_PLAYER when they ask for "
+                "matches or results for a player."
             ),
             example_messages=[
                 "what's Alice's rank in the league?",
@@ -96,6 +105,8 @@ class IntentRegistry:
                 "show me Charlie's standing",
                 "how is Diana doing in the standings?",
                 "what place is Emma's team?",
+                "where does Alice rank individually?",
+                "what's Bob's individual standing?",
             ],
         ),
 
