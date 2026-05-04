@@ -16,6 +16,10 @@ class GetStandingsByPlayerHandler(BaseIntentHandler):
     player's own row. This handler forwards the JSON body verbatim and does
     not parse individual fields, so it tolerates either shape transparently.
     See backend_main design doc 17.
+
+    The backend also returns the league's ordered ranking metrics
+    (`tie_breakers`); this handler forwards them so the frontend can label
+    the displayed metric column to match the league's primary tie-breaker.
     """
 
     def __init__(self, gateway: ReadOnlyBackendGateway) -> None:
@@ -39,12 +43,14 @@ class GetStandingsByPlayerHandler(BaseIntentHandler):
             )
 
         standings = response.body.get("standings", [])
+        tie_breakers = response.body.get("tie_breakers", [])
         return ChatResponse(
             data_type="GET_STANDINGS_BY_PLAYER",
             data={
                 "league_id": league_id,
                 "player_name": player_name,
                 "standings": standings,
+                "tie_breakers": tie_breakers,
             },
             server_message="",
         )
