@@ -7,7 +7,12 @@ from app.ports.read_only_backend_gateway import ReadOnlyBackendGateway
 class GetStandingsHandler(BaseIntentHandler):
     """
     Read intent handler for GET_STANDINGS.
-    Fetches standings from GET /leagues/{league_id}/standings and reshapes the response.
+
+    Fetches standings from GET /leagues/{league_id}/standings and forwards the
+    JSON body verbatim. The backend response is polymorphic on `subject_kind`
+    (a "team" or "player" row, per league configuration) — this handler does
+    not parse individual rows so it tolerates either shape transparently.
+    Frontend renderers branch on `subject_kind`. See backend_main design doc 17.
     """
 
     def __init__(self, gateway: ReadOnlyBackendGateway) -> None:
