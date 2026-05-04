@@ -33,6 +33,11 @@ class TestGetStandings:
         assert body["data_type"] == "GET_STANDINGS"
         assert "standings" in body["data"]
         assert isinstance(body["data"]["standings"], list)
+        # The handler forwards the league's ranking metrics so the frontend can
+        # label the displayed metric column to match the league's primary
+        # tie-breaker. Empty list is acceptable only if the backend omitted it.
+        assert "tie_breakers" in body["data"]
+        assert isinstance(body["data"]["tie_breakers"], list)
         assert body["server_message"] == ""
 
     async def test_standings_phrase_variant(self, client: AsyncClient, league_id: str):
@@ -242,6 +247,9 @@ class TestGetStandingsByPlayer:
         assert "standings" in body["data"]
         assert isinstance(body["data"]["standings"], list)
         assert body["data"]["player_name"].lower() == "alice"
+        # Forwarded so the frontend can label the displayed metric column.
+        assert "tie_breakers" in body["data"]
+        assert isinstance(body["data"]["tie_breakers"], list)
 
     async def test_standings_by_player_entry_shape(self, client: AsyncClient, league_id: str):
         response = await client.post(

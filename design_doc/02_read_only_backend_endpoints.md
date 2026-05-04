@@ -26,21 +26,31 @@
 {
   "standings": [
     {
-      "rank": "integer — position in the table; tied teams share the same rank",
-      "team_id": "string (UUID)",
-      "player1_nickname": "string",
-      "player2_nickname": "string",
+      "subject_kind": "string — 'team' or 'player'; discriminates the row shape below",
+      "rank": "integer — position in the table; tied subjects share the same rank",
+      "team_id": "string (UUID) — present when subject_kind == 'team'",
+      "player1_nickname": "string — present when subject_kind == 'team'",
+      "player2_nickname": "string — present when subject_kind == 'team'",
+      "player_id": "string (UUID) — present when subject_kind == 'player'",
+      "nickname": "string — present when subject_kind == 'player'",
+      "matches_played": "integer",
       "wins": "integer",
-      "losses": "integer"
+      "losses": "integer",
+      "games_won": "integer",
+      "games_lost": "integer",
+      "games_diff": "integer",
+      "win_pct": "float — wins / matches_played, 0.0 for unplayed subjects"
     }
-  ]
+  ],
+  "tie_breakers": "list[string] — copy of the league's ordered ranking metrics; first entry is the primary metric"
 }
 ```
 
 ### Notes
 - Returns 404 if the league does not exist. The handler should surface this as an ERROR response (status_code 502).
-- Tied teams share the same rank. No tiebreaker is applied in V1.
-- The response may be an empty `standings` array if no matches have been recorded yet.
+- Tied subjects share the same rank (standard-competition ranking — see backend design doc 17).
+- The response may be an empty `standings` array if no matches have been recorded yet; `tie_breakers` is still populated from the league's rules.
+- `tie_breakers` is forwarded to the frontend so it can label the displayed metric column to match the league's primary tie-breaker (e.g. "Games won" vs "Games ±").
 
 ---
 
