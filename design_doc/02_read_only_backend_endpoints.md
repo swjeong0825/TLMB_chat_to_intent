@@ -54,6 +54,43 @@
 
 ---
 
+## GET /leagues/{league_id}/standings/by-player
+
+- **Description**: Returns the standings row(s) for one named player. The response shape mirrors `/standings` (`subject_kind`-discriminated rows + top-level `tie_breakers`), but filtered to the player's perspective.
+- **Used by Intents**: GET_STANDINGS_BY_PLAYER
+
+### Path Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| league_id | string (UUID) | The unique identifier of the league. |
+
+### Query Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| player_name | string | Case-insensitive nickname of the player. |
+
+### Response Schema
+
+Same row shape as `GET /leagues/{league_id}/standings` (see above). The `standings` array may contain **one or more rows** depending on the league's v3 rules; see notes.
+
+### Notes
+- Returns 404 if the league or the named player does not exist. The handler should surface this as an ERROR response (status_code 502).
+- **v3 row-count semantics:** the number of rows depends on the league's `LeagueRules`:
+
+  | League rules | Number of rows |
+  |---|---|
+  | `(team, OTPP=true)` | exactly 1 (the player's single team row) |
+  | `(team, OTPP=false)` and the player belongs to N teams | N rows (one per team) |
+  | `(player, OTPP=false)` | exactly 1 (the player's own player-subject row) |
+
+  The chat handler (`GetStandingsByPlayerHandler`) forwards the array verbatim and does not parse per-row fields, so it transparently tolerates any of these shapes. Tests should not assert a single-row response for the by-player path.
+- `tie_breakers` is forwarded to the frontend for column labelling, identical to `GET /standings`.
+- See [`../../design_doc/configurable_ranking_v3.md`](../../design_doc/configurable_ranking_v3.md) for the full v3 spec.
+
+---
+
 ## GET /leagues/{league_id}/matches
 
 - **Description**: Returns the chronological list of all recorded match results in the league, sorted by creation date descending (most recent first).

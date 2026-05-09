@@ -263,6 +263,13 @@ class TestGetStandingsByPlayer:
         body = response.json()
         assert body["data_type"] == "GET_STANDINGS_BY_PLAYER"
         standings = body["data"]["standings"]
+        # Under v3 rules the standings array may contain >=1 rows:
+        #   - (team, OTPP=true): exactly 1 row (the player's team)
+        #   - (team, OTPP=false): N rows when the player belongs to N teams
+        #   - (player, OTPP=false): exactly 1 row (the player's own row)
+        # We assert the row shape on the first row only and rely on the
+        # team_id field being present because the seeded fixture currently
+        # uses team-subject rules. See design_doc/configurable_ranking_v3.md.
         if standings:
             row = standings[0]
             assert "rank" in row
