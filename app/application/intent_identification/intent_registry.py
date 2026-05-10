@@ -156,6 +156,36 @@ class IntentRegistry:
             ],
         ),
 
+        IntentDefinition(
+            name="HELP",
+            intent_type=IntentType.READ,
+            confidence_threshold=70,
+            required_request_params=[_LEAGUE_ID_PARAM],
+            description=(
+                "The user wants to discover what the chatbot can do — a general help / "
+                "command-list request. Triggered by bare requests like 'help', 'help me', "
+                "'what can you do?', 'which commands do you support?', 'how do I use this?'. "
+                "Returns the full list of supported intents with their descriptions and "
+                "example messages; no league data is fetched. "
+                "Do NOT use this intent when the user is asking for help completing a "
+                "specific action — for example, 'help me record a match' is "
+                "SUBMIT_MATCH_RESULT, and 'how do I edit a score?' is EDIT_MATCH_SCORE. "
+                "Only use HELP for generic, action-less discovery requests."
+            ),
+            example_messages=[
+                "help",
+                "help me",
+                "what can you do?",
+                "what can I ask?",
+                "which commands do you support?",
+                "show me the commands",
+                "list of commands",
+                "how do I use this?",
+                "what are the supported intents?",
+                "what features do you have?",
+            ],
+        ),
+
         # ── WRITE INTENTS ─────────────────────────────────────────────────────
 
         IntentDefinition(
