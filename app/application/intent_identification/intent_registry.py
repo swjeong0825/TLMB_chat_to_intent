@@ -161,7 +161,7 @@ class IntentRegistry:
         IntentDefinition(
             name="SUBMIT_MATCH_RESULT",
             intent_type=IntentType.WRITE,
-            confidence_threshold=75,
+            confidence_threshold=70,
             required_request_params=[_LEAGUE_ID_PARAM],
             optional_chat_params=[
                 ParamDef("team1_player1_nickname", str, "Nickname of the first player on team 1"),
@@ -172,11 +172,25 @@ class IntentRegistry:
                 ParamDef("team2_score", str, "Score for team 2 as a non-negative integer string"),
             ],
             description=(
-                "The user wants to record a doubles match result. They describe which two players "
-                "were on each team and what the score was. New players and teams are automatically "
-                "registered if they haven't played before."
+                "The user wants to record a doubles match result. This intent applies whenever the "
+                "user expresses the desire to log/record/submit a match — even when no players or "
+                "score are mentioned yet. All match details (players, scores) are OPTIONAL: any "
+                "missing fields are simply rendered as a blank match-submission form for the user "
+                "to fill in. Therefore, classify bare/info-less requests like 'record match', "
+                "'submit a match', 'log a result', 'I want to enter a match' as this intent with "
+                "high confidence — do NOT ask a clarification question for missing players or "
+                "scores. New players and teams are automatically registered if they haven't played "
+                "before."
             ),
             example_messages=[
+                "record match",
+                "record a match",
+                "submit a match",
+                "submit a match result",
+                "log a result",
+                "enter a match",
+                "I want to record a match",
+                "I want to submit a match result",
                 "Alice and Bob beat Charlie and Diana 6 to 3",
                 "record a match: John and Sarah vs Mike and Emma, 7-5",
                 "we just played, Alice and Bob won 6 to 4 against Charlie and Diana",
