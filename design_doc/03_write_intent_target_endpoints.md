@@ -69,31 +69,65 @@
 
 - **HTTP Method**: PATCH
 - **URL Pattern**: /admin/leagues/{league_id}/matches/{match_id}
+- **Response Shape**: picker (a list of candidate matches), not a single prefilled `{method, url, body}` payload.
+
+### Picker Response Shape
+
+Unlike the other write intents, EDIT_MATCH_SCORE returns a candidate list rather than a single prefilled payload, because the user only narrows the match by mentioning 1-4 players in chat. The frontend renders the candidates and lets the admin pick a row, expand a prefilled form, edit the scores, and submit.
+
+```json
+{
+  "data_type": "EDIT_MATCH_SCORE",
+  "data": {
+    "league_id": "<league_id>",
+    "method": "PATCH",
+    "url_template": "<backend_base_url>/admin/leagues/<league_id>/matches/{match_id}",
+    "player_filters": ["Alice", "Bob"],
+    "matches": [
+      {
+        "match_id": "<uuid>",
+        "team1_player1_nickname": "Alice",
+        "team1_player2_nickname": "Bob",
+        "team2_player1_nickname": "Charlie",
+        "team2_player2_nickname": "Diana",
+        "team1_score": 6,
+        "team2_score": 3,
+        "created_at": "2026-04-12T10:23:00Z"
+      }
+    ],
+    "body_schema": {
+      "team1_score": { "type": "string", "required": true },
+      "team2_score": { "type": "string", "required": true }
+    }
+  },
+  "server_message": "Showing matches that contain ALL of: Alice, Bob. Pick one to edit its score."
+}
+```
 
 ### Path Parameter Mapping
 
 
-| URL Path Param | Resolved from (intent param name)                                                                                                                                        |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| league_id      | league_id                                                                                                                                                                |
-| match_id       | Resolved by handler: GET /leagues/{league_id}/matches → match all four player nicknames (case-insensitive, either player ordering within each team) → extract `match_id` |
+| URL Path Param | Resolved from (intent param name)                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| league_id      | league_id                                                                                                                                                                                        |
+| match_id       | Selected by the user on the frontend by clicking a row in the picker. The handler does not pre-bind a single match; instead it returns `url_template` containing the literal `{match_id}` token. |
 
 
-### Request Body Fields
+### Request Body Fields (rendered by the frontend after row selection)
 
 
-| Field Name  | Type   | Required | Enum Options | Resolved from (intent param name) |
-| ----------- | ------ | -------- | ------------ | --------------------------------- |
-| team1_score | string | Yes      | —            | new_team1_score                   |
-| team2_score | string | Yes      | —            | new_team2_score                   |
-
+| Field Name  | Type   | Required | Enum Options | Resolved from                                                                |
+| ----------- | ------ | -------- | ------------ | ---------------------------------------------------------------------------- |
+| team1_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team1_score`). |
+| team2_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team2_score`). |
 
 ### Notes
 
-- The `match_id` path parameter is resolved by the handler via GET /leagues/{league_id}/matches. Find the match whose four player nicknames match all of `team1_player1_nickname`, `team1_player2_nickname`, `team2_player1_nickname`, `team2_player2_nickname` (case-insensitive; player order within each team pair is not guaranteed to be consistent).
-- If no match is found, return an ERROR response (status_code 502).
-- If multiple matches exist for the same player combination, use the most recent one (highest `created_at`) and include a note in `server_message` about the ambiguity.
-- Scores must be non-negative integer strings. If an extracted score cannot be confirmed as valid, leave the `value` as `null` and record the issue in `server_message`.
+- Supplementary GET: `GET /leagues/{league_id}/matches`. The handler filters the response to matches whose four-nickname set is a superset of the mentioned nicknames (case-insensitive, ALL semantics). The result is sorted by `created_at` descending.
+- If zero nicknames are extracted from the chat message, the handler returns `ERROR` (status_code 400) asking the user to mention at least one player.
+- If 1+ nicknames are extracted but no match contains all of them, this is NOT an error: the handler still returns `data_type: "EDIT_MATCH_SCORE"` with `matches: []` and a `server_message` that explicitly states the ALL semantics (so the user understands why the list is empty).
+- Scores are entered by the user in the per-row form rendered by the frontend; they are not extracted from the chat message. The form prefills with the match's current scores so the admin can correct just the one that was wrong.
+- The `url_template` is "fully resolved" except for the `{match_id}` placeholder, which the frontend substitutes when the user picks a row.
 
 ---
 

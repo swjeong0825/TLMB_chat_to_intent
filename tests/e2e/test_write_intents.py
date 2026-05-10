@@ -143,55 +143,127 @@ class TestEditPlayerNickname:
 
 
 # ---------------------------------------------------------------------------
-# EDIT_MATCH_SCORE
+# EDIT_MATCH_SCORE (picker flow)
 # ---------------------------------------------------------------------------
+
+def _assert_edit_match_score_picker_shape(
+    body: dict, league_id: str
+) -> dict:
+    """Asserts the picker-flow EDIT_MATCH_SCORE response shape and returns body['data']."""
+    assert body["data_type"] != "ERROR", f"Got ERROR: {body['data'].get('error_message')}"
+    assert body["data_type"] != "CLARIFICATION_QUESTION", (
+        f"Got clarification: {body['data'].get('question')}"
+    )
+    assert body["data_type"] == "EDIT_MATCH_SCORE"
+    data = body["data"]
+    assert data["method"] == "PATCH"
+    assert data["league_id"] == league_id
+    assert data["url_template"].endswith(
+        f"/admin/leagues/{league_id}/matches/{{match_id}}"
+    )
+    assert isinstance(data["matches"], list)
+    assert isinstance(data["player_filters"], list) and data["player_filters"]
+    body_schema = data["body_schema"]
+    assert body_schema["team1_score"] == {"type": "string", "required": True}
+    assert body_schema["team2_score"] == {"type": "string", "required": True}
+    return data
+
+
+def _match_has_all(match: dict, nicknames: list[str]) -> bool:
+    in_match = {
+        (match.get("team1_player1_nickname") or "").lower(),
+        (match.get("team1_player2_nickname") or "").lower(),
+        (match.get("team2_player1_nickname") or "").lower(),
+        (match.get("team2_player2_nickname") or "").lower(),
+    }
+    return {n.lower() for n in nicknames}.issubset(in_match)
+
 
 @pytest.mark.usefixtures("seeded_league")
 class TestEditMatchScore:
 
-    async def test_correct_existing_match_score(
+    async def test_picker_returns_matches_for_one_player(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": (
-                    "fix the score for Alice and Bob vs Charlie and Diana "
-                    "— it should be 6-2 not 6-3"
-                ),
+                "client_message": "edit match score for Alice",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "EDIT_MATCH_SCORE"
-        payload_body = _assert_prefilled_payload(
-            body, "PATCH", f"/admin/leagues/{league_id}/matches/"
+        data = _assert_edit_match_score_picker_shape(body, league_id)
+        assert len(data["matches"]) >= 1, (
+            "Expected at least one seeded match containing Alice."
         )
-        assert payload_body["team1_score"]["value"] == "6"
-        assert payload_body["team2_score"]["value"] == "2"
+        for match in data["matches"]:
+            assert _match_has_all(match, ["Alice"])
+            assert "match_id" in match
+            assert "team1_score" in match
+            assert "team2_score" in match
 
-    async def test_edit_score_match_not_found_returns_error(
+    async def test_picker_filters_by_two_players_all_of(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": (
-                    "correct the score for Xavier and Yolanda vs Zack and Wendy to 6-1"
-                ),
+                "client_message": "fix a match score for Alice and Charlie",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        # LLM may return CLARIFICATION_QUESTION (low confidence on invented names)
-        # or ERROR (502) when the intent is classified but the backend can't find the match.
+        data = _assert_edit_match_score_picker_shape(body, league_id)
+        # Only the Alice/Bob vs Charlie/Diana match contains both Alice AND Charlie.
+        assert len(data["matches"]) >= 1
+        for match in data["matches"]:
+            assert _match_has_all(match, ["Alice", "Charlie"])
+
+    async def test_picker_returns_empty_when_no_match_contains_all(
+        self, client: AsyncClient, league_id: str, host_token: str
+    ):
+        # Charlie and Emma are seeded but never played in the same match.
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            headers={"X-Host-Token": host_token},
+            json={
+                "client_message": "edit a match score involving Charlie and Emma",
+                "last_server_message": "",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        # Empty list is NOT an error — it's a normal result with explanation.
+        assert body["data_type"] == "EDIT_MATCH_SCORE"
+        data = body["data"]
+        assert data["matches"] == []
+        # server_message must clearly explain the ALL semantics so the user understands.
+        msg = (body.get("server_message") or "").lower()
+        assert "all" in msg, f"Expected ALL semantics in server_message, got: {msg}"
+
+    async def test_picker_no_player_returns_error_or_clarification(
+        self, client: AsyncClient, league_id: str, host_token: str
+    ):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            headers={"X-Host-Token": host_token},
+            json={
+                "client_message": "I want to edit a match score",
+                "last_server_message": "",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        # With no extractable nicknames the handler returns 400, but the LLM
+        # may also short-circuit with a clarification question — both are fine.
         assert body["data_type"] in ("ERROR", "CLARIFICATION_QUESTION")
         if body["data_type"] == "ERROR":
-            assert body["data"]["status_code"] == 502
+            assert body["data"]["status_code"] in (400, 422)
 
 
 # ---------------------------------------------------------------------------

@@ -58,7 +58,7 @@ Chat-to-Intent Server (this)
 | `GET_ROSTER` | READ | 70 | Show all registered players and teams |
 | `SUBMIT_MATCH_RESULT` | WRITE | 75 | Record a doubles match result (auto-registers new players) |
 | `EDIT_PLAYER_NICKNAME` | WRITE | 80 | Correct a player's nickname (admin) |
-| `EDIT_MATCH_SCORE` | WRITE | 80 | Correct a match score (admin) |
+| `EDIT_MATCH_SCORE` | WRITE | 65 | Correct a match score (admin) — picker flow: admin mentions 1-4 player nicknames to narrow candidate matches |
 | `DELETE_MATCH` | WRITE | 85 | Delete a match record (admin, destructive) |
 | `DELETE_TEAM` | WRITE | 85 | Delete a team from the roster (admin, destructive) |
 

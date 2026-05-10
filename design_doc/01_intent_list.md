@@ -138,12 +138,13 @@
 ## Intent: EDIT_MATCH_SCORE
 
 - **Intent Type**: WRITE
-- **Confidence Threshold Override**: 80
-- **Description**: The admin/host wants to correct the score of a previously recorded match. The match is identified by the four player nicknames across both teams.
+- **Confidence Threshold Override**: 65
+- **Description**: The admin/host wants to correct the score of a previously recorded match. The user mentions 1-4 player nicknames in chat to narrow which match to edit; the server returns every recorded match whose four-nickname set contains ALL mentioned players. The frontend renders the candidates as a picker; the admin picks one row to expand an inline form prefilled with the current scores, edits the scores, and submits. The corrected scores are NOT extracted from the chat message.
 - **Example Messages**:
-  - "fix the score for Alice and Bob vs Charlie and Diana — it should be 6-2 not 6-3"
-  - "correct the match score: John and Sarah vs Mike and Emma was actually 7-5"
-  - "the score for Alice/Bob versus Charlie/Diana was wrong, change it to 6 to 4"
+  - "edit match score for Alice"
+  - "fix a match score involving Alice and Bob"
+  - "correct a match score for Alice, Bob, Charlie"
+  - "edit the score of the match Alice and Bob vs Charlie and Diana"
 
 ### Request Parameters
 
@@ -156,12 +157,17 @@
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| team1_player1_nickname | string | Yes | First player of team 1 — used together with the other three nicknames to identify the match in history. |
-| team1_player2_nickname | string | Yes | Second player of team 1 — used to identify the match. |
-| team2_player1_nickname | string | Yes | First player of team 2 — used to identify the match. |
-| team2_player2_nickname | string | Yes | Second player of team 2 — used to identify the match. |
-| new_team1_score | string | Yes | Corrected score for team 1 as a non-negative integer string (e.g. "6"). |
-| new_team2_score | string | Yes | Corrected score for team 2 as a non-negative integer string (e.g. "2"). |
+| player1_nickname | string | No (at least one of player1..player4_nickname required) | First player nickname mentioned by the user, used to filter candidate matches. |
+| player2_nickname | string | No | Second player nickname mentioned by the user. |
+| player3_nickname | string | No | Third player nickname mentioned by the user. |
+| player4_nickname | string | No | Fourth player nickname mentioned by the user. |
+
+### Notes
+
+- All four `playerN_nickname` params are individually optional, but the handler returns an `ERROR` response if zero nicknames are extracted.
+- Filtering is case-insensitive and uses ALL semantics: a match is returned only if every mentioned nickname is among the match's four nicknames (in either team, in either ordering).
+- An empty result is NOT an error — the response carries `matches: []` and a `server_message` that explains the ALL semantics so the user understands.
+- The admin enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es `/admin/leagues/{league_id}/matches/{match_id}` directly. The chat-to-intent server is not in the write path.
 
 ---
 

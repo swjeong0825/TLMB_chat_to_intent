@@ -212,24 +212,44 @@ class IntentRegistry:
         IntentDefinition(
             name="EDIT_MATCH_SCORE",
             intent_type=IntentType.WRITE,
-            confidence_threshold=80,
+            confidence_threshold=65,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
-            required_chat_params=[
-                ParamDef("team1_player1_nickname", str, "First player of team 1 — used to identify the match"),
-                ParamDef("team1_player2_nickname", str, "Second player of team 1 — used to identify the match"),
-                ParamDef("team2_player1_nickname", str, "First player of team 2 — used to identify the match"),
-                ParamDef("team2_player2_nickname", str, "Second player of team 2 — used to identify the match"),
-                ParamDef("new_team1_score", str, "Corrected score for team 1 as a non-negative integer string"),
-                ParamDef("new_team2_score", str, "Corrected score for team 2 as a non-negative integer string"),
+            optional_chat_params=[
+                ParamDef(
+                    "player1_nickname",
+                    str,
+                    "First player nickname mentioned by the user, used to narrow which match to edit",
+                ),
+                ParamDef(
+                    "player2_nickname",
+                    str,
+                    "Second player nickname mentioned by the user (optional)",
+                ),
+                ParamDef(
+                    "player3_nickname",
+                    str,
+                    "Third player nickname mentioned by the user (optional)",
+                ),
+                ParamDef(
+                    "player4_nickname",
+                    str,
+                    "Fourth player nickname mentioned by the user (optional)",
+                ),
             ],
             description=(
                 "The admin/host wants to correct the score of a previously recorded match. "
-                "The match is identified by the four player nicknames across both teams."
+                "The user mentions 1 to 4 player nicknames to narrow down which match to edit; "
+                "the server returns all matches containing ALL of the mentioned players, and the "
+                "admin then picks one and edits its score in a form. The user does NOT type new "
+                "scores in the chat message — score editing happens in the picker form."
             ),
             example_messages=[
-                "fix the score for Alice and Bob vs Charlie and Diana — it should be 6-2 not 6-3",
-                "correct the match score: John and Sarah vs Mike and Emma was actually 7-5",
-                "the score for Alice/Bob versus Charlie/Diana was wrong, change it to 6 to 4",
+                "edit match score for Alice",
+                "update match score for Alice",
+                "fix a match score involving Alice and Bob",
+                "correct a match score for Alice, Bob, Charlie",
+                "edit the score of the match Alice and Bob vs Charlie and Diana",
+                "I want to fix the score of one of Alice's matches",
             ],
         ),
 
