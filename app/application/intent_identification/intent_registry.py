@@ -221,6 +221,8 @@ class IntentRegistry:
             ),
             summary="Record a doubles match result.",
             example_messages=[
+                "Jeff + James 6:4 John + Hana"
+                "Tony & Hana vs Aaron & Sarah"
                 "record match",
                 "record a match",
                 "submit a match",
