@@ -25,7 +25,7 @@ class HelpHandler(BaseIntentHandler):
                         "name": "GET_STANDINGS",
                         "intent_type": "READ",
                         "requires_admin": false,
-                        "description": "...",
+                        "description": "short UI line (see intent.summary)",
                         "example_messages": ["...", "..."]
                     },
                     ...
@@ -45,7 +45,7 @@ class HelpHandler(BaseIntentHandler):
                     "name": intent.name,
                     "intent_type": intent.intent_type.value,
                     "requires_admin": _requires_admin(intent),
-                    "description": intent.description,
+                    "description": intent.summary or intent.description,
                     "example_messages": list(intent.example_messages),
                 }
             )

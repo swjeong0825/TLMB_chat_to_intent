@@ -24,6 +24,7 @@ class IntentDefinition:
     required_chat_params: list[ParamDef] = field(default_factory=list)
     optional_chat_params: list[ParamDef] = field(default_factory=list)
     description: str = ""
+    summary: str = ""
     example_messages: list[str] = field(default_factory=list)
 
 
@@ -48,6 +49,7 @@ class IntentRegistry:
                 "order). Some leagues rank by team and some by individual player; "
                 "either way, this intent returns the full leaderboard."
             ),
+            summary="Show League leaderboard.",
             example_messages=[
                 "show me the standings",
                 "who's winning the league?",
@@ -68,6 +70,7 @@ class IntentRegistry:
                 "The user wants to see the list of all recorded match results "
                 "in the league, sorted most recent first."
             ),
+            summary="Show all match results, newest first.",
             example_messages=[
                 "show me all the matches",
                 "what matches have been played?",
@@ -99,6 +102,7 @@ class IntentRegistry:
                 "player named. Use GET_MATCH_HISTORY_BY_PLAYER when they ask for "
                 "matches or results for a player."
             ),
+            summary="Show one player's standings row.",
             example_messages=[
                 "what's Alice's rank in the league?",
                 "where does Bob's team stand?",
@@ -129,6 +133,7 @@ class IntentRegistry:
                 "Use GET_STANDINGS_BY_PLAYER when they ask for rank, standing, or leaderboard position "
                 "for that player's team rather than a list of matches."
             ),
+            summary="Show one player's match history.",
             example_messages=[
                 "show me Alice's match history",
                 "what matches has Bob played?",
@@ -147,6 +152,7 @@ class IntentRegistry:
             description=(
                 "The user wants to see the list of all registered players and teams in the league."
             ),
+            summary="Show all registered players and teams.",
             example_messages=[
                 "show me all the players",
                 "who's in the league?",
@@ -172,6 +178,7 @@ class IntentRegistry:
                 "SUBMIT_MATCH_RESULT, and 'how do I edit a score?' is EDIT_MATCH_SCORE. "
                 "Only use HELP for generic, action-less discovery requests."
             ),
+            summary="Generic help, listing available commands.",
             example_messages=[
                 "help",
                 "help me",
@@ -212,6 +219,7 @@ class IntentRegistry:
                 "scores. New players and teams are automatically registered if they haven't played "
                 "before."
             ),
+            summary="Record a doubles match result.",
             example_messages=[
                 "record match",
                 "record a match",
@@ -245,6 +253,7 @@ class IntentRegistry:
                 "The admin/host wants to correct or update a player's nickname in the league. "
                 "The player is identified by their current nickname."
             ),
+            summary="Change a player's nickname.",
             example_messages=[
                 "rename Alice to Alicia",
                 "change John's nickname to Johnny",
@@ -287,6 +296,7 @@ class IntentRegistry:
                 "admin then picks one and edits its score in a form. The user does NOT type new "
                 "scores in the chat message — score editing happens in the picker form."
             ),
+            summary="Update/Fix the match score.",
             example_messages=[
                 "edit match score for Alice",
                 "update match score for Alice",
@@ -312,6 +322,7 @@ class IntentRegistry:
                 "The admin/host wants to permanently delete a match record from the league. "
                 "The match is identified by the four player nicknames across both teams."
             ),
+            summary="Delete a match (need four players).",
             example_messages=[
                 "delete the match between Alice/Bob and Charlie/Diana",
                 "remove the match where John and Sarah played Mike and Emma",
@@ -333,6 +344,7 @@ class IntentRegistry:
                 "The team is identified by its two player nicknames. "
                 "The team must have no associated match records before it can be deleted."
             ),
+            summary="Delete a team with no matches.",
             example_messages=[
                 "delete the team Alice and Bob",
                 "remove Alice and Bob's team from the league",
