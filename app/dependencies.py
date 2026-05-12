@@ -24,16 +24,19 @@ from app.application.parameter_resolution.request_params_validator import Reques
 from app.infrastructure.config.settings import get_settings
 from app.infrastructure.providers.read_only_backend_client import ReadOnlyBackendClient
 from app.intents.base_intent_handler import BaseIntentHandler
+from app.intents.handlers.add_eligible_players_handler import AddEligiblePlayersHandler
 from app.intents.handlers.delete_match_handler import DeleteMatchHandler
 from app.intents.handlers.delete_team_handler import DeleteTeamHandler
 from app.intents.handlers.edit_match_score_handler import EditMatchScoreHandler
 from app.intents.handlers.edit_player_nickname_handler import EditPlayerNicknameHandler
+from app.intents.handlers.get_eligible_players_handler import GetEligiblePlayersHandler
 from app.intents.handlers.get_match_history_by_player_handler import GetMatchHistoryByPlayerHandler
 from app.intents.handlers.get_match_history_handler import GetMatchHistoryHandler
 from app.intents.handlers.get_roster_handler import GetRosterHandler
 from app.intents.handlers.get_standings_by_player_handler import GetStandingsByPlayerHandler
 from app.intents.handlers.get_standings_handler import GetStandingsHandler
 from app.intents.handlers.help_handler import HelpHandler
+from app.intents.handlers.remove_eligible_player_handler import RemoveEligiblePlayerHandler
 from app.intents.handlers.submit_match_result_handler import SubmitMatchResultHandler
 from app.ports.llm_provider import LLMProvider
 
@@ -81,12 +84,15 @@ def _build_chat_handler() -> ChatHandler:
         "GET_MATCH_HISTORY": GetMatchHistoryHandler(gateway),
         "GET_MATCH_HISTORY_BY_PLAYER": GetMatchHistoryByPlayerHandler(gateway),
         "GET_ROSTER": GetRosterHandler(gateway),
+        "GET_ELIGIBLE_PLAYERS": GetEligiblePlayersHandler(gateway),
         "HELP": HelpHandler(),
         "SUBMIT_MATCH_RESULT": SubmitMatchResultHandler(base_url),
         "EDIT_PLAYER_NICKNAME": EditPlayerNicknameHandler(gateway, base_url),
         "EDIT_MATCH_SCORE": EditMatchScoreHandler(gateway, base_url),
         "DELETE_MATCH": DeleteMatchHandler(gateway, base_url),
         "DELETE_TEAM": DeleteTeamHandler(gateway, base_url),
+        "ADD_ELIGIBLE_PLAYERS": AddEligiblePlayersHandler(base_url),
+        "REMOVE_ELIGIBLE_PLAYER": RemoveEligiblePlayerHandler(gateway, base_url),
     }
 
     # Application layer

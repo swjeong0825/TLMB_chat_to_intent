@@ -8,6 +8,14 @@ class SubmitMatchResultHandler(BaseIntentHandler):
     Write intent handler for SUBMIT_MATCH_RESULT.
     Assembles a prefilled payload for POST /leagues/{league_id}/matches.
     No supplementary GET calls needed — the backend auto-registers new players/teams.
+
+    IneligiblePlayerError (HTTP 422) handling note:
+    When LeagueRules.require_eligible_players=true, the backend returns a 422
+    with {"error": "IneligiblePlayerError", "missing_nicknames": [...]}. This
+    handler is a prefilled-form passthrough and never calls the backend itself,
+    so the 422 only surfaces when the FRONTEND submits the form. The friendly
+    user-facing message and the "+ Add to eligible players" button are rendered
+    in js/user-facing-errors.js and the submitBackendAction branch in chat.js.
     """
 
     def __init__(self, backend_base_url: str) -> None:

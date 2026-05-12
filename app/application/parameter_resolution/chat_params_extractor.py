@@ -73,11 +73,14 @@ class ChatParamsExtractor:
 
         for param in params:
             desc = f": {param.description}" if param.description else ""
-            lines.append(f"- {param.name} ({param.type.__name__}){desc}")
+            type_hint = "JSON array of strings" if param.type is list else param.type.__name__
+            lines.append(f"- {param.name} ({type_hint}){desc}")
 
         lines.append("\nResponse schema (JSON):")
         fields = ",\n".join(
-            f'  "{p.name}": <value or null>' for p in params
+            f'  "{p.name}": <JSON array of strings or null>' if p.type is list
+            else f'  "{p.name}": <value or null>'
+            for p in params
         )
         lines.append("{")
         lines.append(fields)

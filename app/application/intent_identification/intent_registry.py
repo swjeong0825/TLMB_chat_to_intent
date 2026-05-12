@@ -163,6 +163,26 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
+            name="GET_ELIGIBLE_PLAYERS",
+            intent_type=IntentType.READ,
+            confidence_threshold=70,
+            required_request_params=[_LEAGUE_ID_PARAM],
+            description=(
+                "The user wants to see the host-curated list of nicknames that are "
+                "ALLOWED to participate in the league. Distinct from GET_ROSTER, which "
+                "returns players who have already played at least one match."
+            ),
+            summary="Show the eligible-players allowlist.",
+            example_messages=[
+                "who can join this league?",
+                "show me the eligible players",
+                "show all available players",
+                "who is allowed to play in this league?",
+                "list the eligible roster",
+            ],
+        ),
+
+        IntentDefinition(
             name="HELP",
             intent_type=IntentType.READ,
             confidence_threshold=70,
@@ -352,6 +372,57 @@ class IntentRegistry:
                 "remove Alice and Bob's team from the league",
                 "delete the team formed by John and Sarah",
                 "get rid of Mike and Emma's team",
+            ],
+        ),
+
+        IntentDefinition(
+            name="ADD_ELIGIBLE_PLAYERS",
+            intent_type=IntentType.WRITE,
+            confidence_threshold=80,
+            required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
+            required_chat_params=[
+                ParamDef(
+                    "nicknames",
+                    list,
+                    "One or more nicknames to add to the eligible-players allowlist",
+                ),
+            ],
+            description=(
+                "The admin/host wants to add one or more nicknames to the eligible-"
+                "players allowlist. The list controls who is ALLOWED to play; it is "
+                "independent of the actual roster (players who have already played)."
+            ),
+            summary="Add nicknames to the eligible list.",
+            example_messages=[
+                "add Alex and Daniel to the eligible players",
+                "add Michael to the allowlist",
+                "make Jason eligible to play",
+                "register Alex Kim, Daniel Park, Jason Lee as eligible",
+                "set the eligible players: Alex, Daniel, Jason",
+            ],
+        ),
+
+        IntentDefinition(
+            name="REMOVE_ELIGIBLE_PLAYER",
+            intent_type=IntentType.WRITE,
+            confidence_threshold=80,
+            required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
+            required_chat_params=[
+                ParamDef(
+                    "nickname",
+                    str,
+                    "The nickname to remove from the eligible-players allowlist",
+                ),
+            ],
+            description=(
+                "The admin/host wants to remove a single nickname from the eligible-"
+                "players allowlist. Does NOT remove any roster Player record."
+            ),
+            summary="Remove one nickname from the eligible list.",
+            example_messages=[
+                "remove Michael from the eligible players",
+                "drop Ryan from the allowlist",
+                "Daniel is no longer eligible",
             ],
         ),
     ]

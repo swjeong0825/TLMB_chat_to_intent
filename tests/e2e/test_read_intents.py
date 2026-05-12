@@ -227,6 +227,64 @@ class TestGetMatchHistoryByPlayer:
 
 
 # ---------------------------------------------------------------------------
+# GET_ELIGIBLE_PLAYERS
+# ---------------------------------------------------------------------------
+
+@pytest.mark.usefixtures("seeded_league")
+class TestGetEligiblePlayers:
+
+    async def test_show_eligible_players(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "show me the eligible players", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_ELIGIBLE_PLAYERS"
+        assert "eligible_players" in body["data"]
+        assert isinstance(body["data"]["eligible_players"], list)
+        assert body["server_message"] == ""
+
+    async def test_eligible_players_phrase_variant(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "who can join this league?", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_ELIGIBLE_PLAYERS"
+
+    async def test_eligible_players_has_seeded_entries(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "list the eligible roster", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_ELIGIBLE_PLAYERS"
+        eligible = body["data"]["eligible_players"]
+        # Seeded in conftest: alex, daniel, jason
+        nicknames = {ep["nickname"].lower() for ep in eligible}
+        assert "alex" in nicknames
+        assert "daniel" in nicknames
+        assert "jason" in nicknames
+
+    async def test_eligible_players_entry_shape(self, client: AsyncClient, league_id: str):
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            json={"client_message": "show all available players", "last_server_message": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data_type"] == "GET_ELIGIBLE_PLAYERS"
+        eligible = body["data"]["eligible_players"]
+        if eligible:
+            entry = eligible[0]
+            assert "eligible_player_id" in entry
+            assert "nickname" in entry
+
+
+# ---------------------------------------------------------------------------
 # GET_STANDINGS_BY_PLAYER
 # ---------------------------------------------------------------------------
 
