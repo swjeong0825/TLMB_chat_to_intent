@@ -312,52 +312,52 @@ class TestDeleteMatch:
 
 
 # ---------------------------------------------------------------------------
-# ADD_ELIGIBLE_PLAYERS
+# ADD_ALLOWLIST_ENTRIES
 # ---------------------------------------------------------------------------
 
-class TestAddEligiblePlayers:
+class TestAddAllowlistEntries:
 
-    async def test_add_eligible_players_payload(
+    async def test_add_allowlist_entries_payload(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "add Alex and Daniel to the eligible players",
+                "client_message": "add Alex and Daniel to the allowlist",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "ADD_ELIGIBLE_PLAYERS"
+        assert body["data_type"] == "ADD_ALLOWLIST_ENTRIES"
         payload_body = _assert_prefilled_payload(
-            body, "POST", f"/admin/leagues/{league_id}/eligible-players"
+            body, "POST", f"/admin/leagues/{league_id}/allowlist"
         )
         assert payload_body["nicknames"]["required"] is True
         assert isinstance(payload_body["nicknames"]["value"], list)
         assert len(payload_body["nicknames"]["value"]) >= 1
 
-    async def test_add_eligible_players_single_name(
+    async def test_add_allowlist_entries_single_name(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "make Jason eligible to play",
+                "client_message": "allow Jason to play",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "ADD_ELIGIBLE_PLAYERS"
+        assert body["data_type"] == "ADD_ALLOWLIST_ENTRIES"
         payload_body = _assert_prefilled_payload(
-            body, "POST", f"/admin/leagues/{league_id}/eligible-players"
+            body, "POST", f"/admin/leagues/{league_id}/allowlist"
         )
         assert payload_body["nicknames"]["value"] is not None
 
-    async def test_add_eligible_players_url_has_no_placeholder(
+    async def test_add_allowlist_entries_url_has_no_placeholder(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
@@ -370,54 +370,54 @@ class TestAddEligiblePlayers:
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "ADD_ELIGIBLE_PLAYERS"
+        assert body["data_type"] == "ADD_ALLOWLIST_ENTRIES"
         url = body["data"]["url"]
         assert "{" not in url, f"URL still has unresolved placeholder: {url}"
 
 
 # ---------------------------------------------------------------------------
-# REMOVE_ELIGIBLE_PLAYER
+# REMOVE_ALLOWLIST_ENTRY
 # ---------------------------------------------------------------------------
 
 @pytest.mark.usefixtures("seeded_league")
-class TestRemoveEligiblePlayer:
+class TestRemoveAllowlistEntry:
 
-    async def test_remove_existing_eligible_player_returns_payload(
+    async def test_remove_existing_allowlist_entry_returns_payload(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "remove alex from the eligible players",
+                "client_message": "remove alex from the allowlist",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "REMOVE_ELIGIBLE_PLAYER"
+        assert body["data_type"] == "REMOVE_ALLOWLIST_ENTRY"
         _assert_prefilled_payload(
-            body, "DELETE", f"/admin/leagues/{league_id}/eligible-players/"
+            body, "DELETE", f"/admin/leagues/{league_id}/allowlist/"
         )
         assert body["data"]["body"] == {}
-        # eligible_player_id should be resolved — no {placeholder} in URL
+        # allowlist_entry_id should be resolved — no {placeholder} in URL
         url = body["data"]["url"]
         assert "{" not in url, f"URL still has unresolved placeholder: {url}"
 
-    async def test_remove_nonexistent_eligible_player_returns_clarification(
+    async def test_remove_nonexistent_allowlist_entry_returns_clarification(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "remove NonExistentXYZ123 from the eligible players",
+                "client_message": "remove NonExistentXYZ123 from the allowlist",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        # Either CLARIFICATION_QUESTION (nickname not in eligible list) or
+        # Either CLARIFICATION_QUESTION (nickname not in allowlist) or
         # CLARIFICATION_QUESTION from low-confidence detection — both safe outcomes.
         assert body["data_type"] in ("CLARIFICATION_QUESTION", "ERROR")
 

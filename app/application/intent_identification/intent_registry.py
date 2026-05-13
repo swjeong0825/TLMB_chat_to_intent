@@ -163,22 +163,23 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
-            name="GET_ELIGIBLE_PLAYERS",
+            name="GET_ALLOWLIST",
             intent_type=IntentType.READ,
             confidence_threshold=70,
             required_request_params=[_LEAGUE_ID_PARAM],
             description=(
-                "The user wants to see the host-curated list of nicknames that are "
-                "ALLOWED to participate in the league. Distinct from GET_ROSTER, which "
-                "returns players who have already played at least one match."
+                "The user wants to see the host-curated allowlist — the list of "
+                "nicknames that are ALLOWED to participate in the league. Distinct "
+                "from GET_ROSTER, which returns players who have already played at "
+                "least one match."
             ),
-            summary="Show the eligible-players allowlist.",
+            summary="Show the league's allowlist.",
             example_messages=[
                 "who can join this league?",
-                "show me the eligible players",
-                "show all available players",
+                "show me the allowlist",
+                "show all allowed players",
                 "who is allowed to play in this league?",
-                "list the eligible roster",
+                "list the allowlist entries",
             ],
         ),
 
@@ -376,7 +377,7 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
-            name="ADD_ELIGIBLE_PLAYERS",
+            name="ADD_ALLOWLIST_ENTRIES",
             intent_type=IntentType.WRITE,
             confidence_threshold=80,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
@@ -384,26 +385,26 @@ class IntentRegistry:
                 ParamDef(
                     "nicknames",
                     list,
-                    "One or more nicknames to add to the eligible-players allowlist",
+                    "One or more nicknames to add to the league's allowlist",
                 ),
             ],
             description=(
-                "The admin/host wants to add one or more nicknames to the eligible-"
-                "players allowlist. The list controls who is ALLOWED to play; it is "
+                "The admin/host wants to add one or more nicknames to the league's "
+                "allowlist. The allowlist controls who is ALLOWED to play; it is "
                 "independent of the actual roster (players who have already played)."
             ),
-            summary="Add nicknames to the eligible list.",
+            summary="Add nicknames to the allowlist.",
             example_messages=[
-                "add Alex and Daniel to the eligible players",
+                "add Alex and Daniel to the allowlist",
                 "add Michael to the allowlist",
-                "make Jason eligible to play",
-                "register Alex Kim, Daniel Park, Jason Lee as eligible",
-                "set the eligible players: Alex, Daniel, Jason",
+                "allow Jason to play",
+                "register Alex Kim, Daniel Park, Jason Lee on the allowlist",
+                "set the allowlist: Alex, Daniel, Jason",
             ],
         ),
 
         IntentDefinition(
-            name="REMOVE_ELIGIBLE_PLAYER",
+            name="REMOVE_ALLOWLIST_ENTRY",
             intent_type=IntentType.WRITE,
             confidence_threshold=80,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
@@ -411,18 +412,18 @@ class IntentRegistry:
                 ParamDef(
                     "nickname",
                     str,
-                    "The nickname to remove from the eligible-players allowlist",
+                    "The nickname to remove from the league's allowlist",
                 ),
             ],
             description=(
-                "The admin/host wants to remove a single nickname from the eligible-"
-                "players allowlist. Does NOT remove any roster Player record."
+                "The admin/host wants to remove a single nickname from the league's "
+                "allowlist. Does NOT remove any roster Player record."
             ),
-            summary="Remove one nickname from the eligible list.",
+            summary="Remove one nickname from the allowlist.",
             example_messages=[
-                "remove Michael from the eligible players",
+                "remove Michael from the allowlist",
                 "drop Ryan from the allowlist",
-                "Daniel is no longer eligible",
+                "Daniel is no longer on the allowlist",
             ],
         ),
     ]

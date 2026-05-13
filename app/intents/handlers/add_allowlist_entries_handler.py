@@ -3,10 +3,10 @@ from app.application.parameter_resolution.resolved_params import ResolvedParams
 from app.intents.base_intent_handler import BaseIntentHandler
 
 
-class AddEligiblePlayersHandler(BaseIntentHandler):
+class AddAllowlistEntriesHandler(BaseIntentHandler):
     """
-    Write intent handler for ADD_ELIGIBLE_PLAYERS.
-    Assembles a prefilled payload for POST /admin/leagues/{league_id}/eligible-players.
+    Write intent handler for ADD_ALLOWLIST_ENTRIES.
+    Assembles a prefilled payload for POST /admin/leagues/{league_id}/allowlist.
     No supplementary GET needed — the payload is submitted directly by the frontend.
     """
 
@@ -26,7 +26,7 @@ class AddEligiblePlayersHandler(BaseIntentHandler):
         else:
             nicknames = []
 
-        url = f"{self._backend_base_url}/admin/leagues/{league_id}/eligible-players"
+        url = f"{self._backend_base_url}/admin/leagues/{league_id}/allowlist"
         body = {
             "nicknames": {
                 "type": "array[string]",
@@ -36,7 +36,7 @@ class AddEligiblePlayersHandler(BaseIntentHandler):
         }
 
         return ChatResponse(
-            data_type="ADD_ELIGIBLE_PLAYERS",
+            data_type="ADD_ALLOWLIST_ENTRIES",
             data={"method": "POST", "url": url, "body": body},
             server_message=params.issues_summary(),
         )

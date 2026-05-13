@@ -62,14 +62,14 @@ async def client() -> AsyncClient:
 @pytest_asyncio.fixture(scope="session")
 async def seeded_league(league_id: str, host_token: str) -> None:
     """
-    Seeds the test league with two matches and an eligible-players list.
+    Seeds the test league with two matches and an allowlist.
 
     Submitting matches auto-creates all players and teams, so this produces:
       Players : Alice, Bob, Charlie, Diana, Emma, John
       Teams   : Alice/Bob, Charlie/Diana, Emma/John
       Matches : Alice/Bob vs Charlie/Diana (6-3), Alice/Bob vs Emma/John (6-4)
 
-    Eligible players seeded: alex, daniel, jason
+    Allowlist seeded: alex, daniel, jason
     (The add is idempotent — 409 on duplicate is silently ignored.)
 
     Tests that assert specific players, teams, or matches exist should declare
@@ -95,11 +95,11 @@ async def seeded_league(league_id: str, host_token: str) -> None:
                 "team2_score": "4",
             },
         )
-        # Seed eligible players — ignore 409 (already exists) so the fixture
+        # Seed allowlist entries — ignore 409 (already exists) so the fixture
         # stays idempotent across repeated test runs.
         try:
             await backend.post(
-                f"/admin/leagues/{league_id}/eligible-players",
+                f"/admin/leagues/{league_id}/allowlist",
                 headers={"X-Host-Token": host_token},
                 json={"nicknames": ["alex", "daniel", "jason"]},
             )
