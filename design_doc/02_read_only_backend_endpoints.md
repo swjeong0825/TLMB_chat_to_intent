@@ -128,7 +128,8 @@ Same row shape as `GET /leagues/{league_id}/standings` (see above). The `standin
 ### Notes
 - Returns 404 if the league does not exist. The handler should surface this as an ERROR response (status_code 502).
 - Player nicknames reflect the current league state — admin nickname edits retroactively affect all historical display.
-- **For EDIT_MATCH_SCORE and DELETE_MATCH handlers:** this endpoint is called to resolve a `match_id` from the four player nicknames extracted from the user's message. Match using case-insensitive nickname comparison, considering both player orderings within each team (player1/player2 positions are not guaranteed to be consistent). If no match is found for the given nicknames, the handler should return an ERROR response (status_code 502). If multiple matches exist for the same player combination, use the most recent one and note the ambiguity in `server_message`.
+- **For DELETE_MATCH handler:** this endpoint is called to resolve a single `match_id` from the four player nicknames extracted from the user's message. Match using case-insensitive nickname comparison, considering both player orderings within each team (player1/player2 positions are not guaranteed to be consistent). If no match is found for the given nicknames, the handler should return an ERROR response (status_code 502). If multiple matches exist for the same player combination, use the most recent one and note the ambiguity in `server_message`.
+- **For EDIT_MATCH_SCORE handler:** this endpoint is called to fetch the list of candidate matches that contain ALL of the 1-4 chat-extracted player nicknames (set-membership, order-agnostic). An empty result is NOT an error — the handler returns `data_type: "EDIT_MATCH_SCORE"` with `matches: []` and a `server_message` explaining the ALL semantics. Filtering happens on the chat server; the backend response is not filtered by player.
 
 ---
 

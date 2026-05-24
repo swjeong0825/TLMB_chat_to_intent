@@ -54,8 +54,16 @@ class EditMatchScoreHandler(BaseIntentHandler):
         filtered = [m for m in all_matches if _match_contains_all(m, nicknames)]
         filtered.sort(key=lambda m: m.get("created_at", ""), reverse=True)
 
+        # Targets the player-facing edit route, NOT the admin route.
+        # The backend enforces the player-edit window on this endpoint
+        # for callers without X-Host-Token; admins bypass it by virtue
+        # of attaching the token at the frontend submit step. Pointing
+        # at the player route means both player and admin chat flows
+        # converge on a single URL, and the frontend (which already
+        # decides whether to add X-Host-Token based on URL shape) keeps
+        # working uniformly.
         url_template = (
-            f"{self._backend_base_url}/admin/leagues/{league_id}/matches/{{match_id}}"
+            f"{self._backend_base_url}/leagues/{league_id}/matches/{{match_id}}"
         )
 
         joined = ", ".join(nicknames)

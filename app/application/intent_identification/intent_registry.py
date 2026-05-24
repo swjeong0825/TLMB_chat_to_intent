@@ -268,7 +268,13 @@ class IntentRegistry:
             name="EDIT_MATCH_SCORE",
             intent_type=IntentType.WRITE,
             confidence_threshold=65,
-            required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
+            # `host_token` is intentionally NOT required here: any user
+            # with `league_id` (player or host) may want to correct a
+            # match score. The backend enforces the policy: players can
+            # only edit recently-created matches (configurable window,
+            # default 1h); admins (with X-Host-Token) can edit any
+            # match at any time.
+            required_request_params=[_LEAGUE_ID_PARAM],
             optional_chat_params=[
                 ParamDef(
                     "player1_nickname",
@@ -292,11 +298,13 @@ class IntentRegistry:
                 ),
             ],
             description=(
-                "The admin/host wants to correct the score of a previously recorded match. "
+                "The user wants to correct the score of a previously recorded match. "
                 "The user mentions 1 to 4 player nicknames to narrow down which match to edit; "
                 "the server returns all matches containing ALL of the mentioned players, and the "
-                "admin then picks one and edits its score in a form. The user does NOT type new "
-                "scores in the chat message — score editing happens in the picker form."
+                "user then picks one and edits its score in a form. The new score is NOT typed in "
+                "the chat message — score editing happens in the picker form. "
+                "The league host can edit any match; non-host players can only edit a recently "
+                "submitted match within the league's configured edit window."
             ),
             summary="Update/Fix the match score.",
             example_messages=[

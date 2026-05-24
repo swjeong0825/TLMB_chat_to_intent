@@ -158,8 +158,15 @@ def _assert_edit_match_score_picker_shape(
     data = body["data"]
     assert data["method"] == "PATCH"
     assert data["league_id"] == league_id
+    # The intent now targets the player-facing edit route (no `/admin/`);
+    # admin requests still work because the backend bypasses the
+    # player-edit window when `X-Host-Token` is attached on submission.
     assert data["url_template"].endswith(
-        f"/admin/leagues/{league_id}/matches/{{match_id}}"
+        f"/leagues/{league_id}/matches/{{match_id}}"
+    )
+    assert "/admin/" not in data["url_template"], (
+        "EDIT_MATCH_SCORE url_template must target the player route, "
+        "not /admin/. The frontend chooses whether to attach X-Host-Token."
     )
     assert isinstance(data["matches"], list)
     assert isinstance(data["player_filters"], list) and data["player_filters"]
@@ -181,13 +188,18 @@ def _match_has_all(match: dict, nicknames: list[str]) -> bool:
 
 @pytest.mark.usefixtures("seeded_league")
 class TestEditMatchScore:
+    """EDIT_MATCH_SCORE is now a player-accessible intent (no X-Host-Token
+    required at the chat layer). The picker tests therefore run WITHOUT
+    the host-token header to exercise the realistic player flow. One
+    admin-parity test below confirms that requests WITH the token still
+    work — the chat server should be indifferent to the header for this
+    intent."""
 
     async def test_picker_returns_matches_for_one_player(
-        self, client: AsyncClient, league_id: str, host_token: str
+        self, client: AsyncClient, league_id: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            headers={"X-Host-Token": host_token},
             json={
                 "client_message": "edit match score for Alice",
                 "last_server_message": "",
@@ -206,11 +218,10 @@ class TestEditMatchScore:
             assert "team2_score" in match
 
     async def test_picker_filters_by_two_players_all_of(
-        self, client: AsyncClient, league_id: str, host_token: str
+        self, client: AsyncClient, league_id: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            headers={"X-Host-Token": host_token},
             json={
                 "client_message": "fix a match score for Alice and Charlie",
                 "last_server_message": "",
@@ -225,12 +236,11 @@ class TestEditMatchScore:
             assert _match_has_all(match, ["Alice", "Charlie"])
 
     async def test_picker_returns_empty_when_no_match_contains_all(
-        self, client: AsyncClient, league_id: str, host_token: str
+        self, client: AsyncClient, league_id: str
     ):
         # Charlie and Emma are seeded but never played in the same match.
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            headers={"X-Host-Token": host_token},
             json={
                 "client_message": "edit a match score involving Charlie and Emma",
                 "last_server_message": "",
@@ -247,11 +257,10 @@ class TestEditMatchScore:
         assert "all" in msg, f"Expected ALL semantics in server_message, got: {msg}"
 
     async def test_picker_no_player_returns_error_or_clarification(
-        self, client: AsyncClient, league_id: str, host_token: str
+        self, client: AsyncClient, league_id: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            headers={"X-Host-Token": host_token},
             json={
                 "client_message": "I want to edit a match score",
                 "last_server_message": "",
@@ -264,6 +273,29 @@ class TestEditMatchScore:
         assert body["data_type"] in ("ERROR", "CLARIFICATION_QUESTION")
         if body["data_type"] == "ERROR":
             assert body["data"]["status_code"] in (400, 422)
+
+    async def test_picker_with_host_token_still_works_admin_parity(
+        self, client: AsyncClient, league_id: str, host_token: str
+    ):
+        """Admin parity: a request with X-Host-Token must still return
+        the same picker shape (url_template targets the player route
+        regardless; admin bypasses the window at submission time)."""
+        response = await client.post(
+            f"/leagues/{league_id}/chat",
+            headers={"X-Host-Token": host_token},
+            json={
+                "client_message": "edit match score for Alice",
+                "last_server_message": "",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        data = _assert_edit_match_score_picker_shape(body, league_id)
+        # url_template must be the player route even when the chat call
+        # carries an admin token — the admin context only matters when
+        # the frontend later PATCHes the backend.
+        assert "/admin/" not in data["url_template"]
+        assert len(data["matches"]) >= 1
 
 
 # ---------------------------------------------------------------------------

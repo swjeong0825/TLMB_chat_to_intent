@@ -125,13 +125,24 @@ X-Host-Token: {{host_token}}
 
 ###
 
-### EDIT_MATCH_SCORE — all info in one message
+### EDIT_MATCH_SCORE — admin path (X-Host-Token bypasses the player edit window)
 POST {{baseUrl}}/leagues/{{league_id}}/chat
 Content-Type: application/json
 X-Host-Token: {{host_token}}
 
 {
   "client_message": "Fix the score for Alice and Bob vs Charlie and Dave — it should be 6-4 not 6-3",
+  "last_server_message": ""
+}
+
+###
+
+### EDIT_MATCH_SCORE — player path (no X-Host-Token; backend enforces the edit window)
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+
+{
+  "client_message": "edit match score for Alice",
   "last_server_message": ""
 }
 

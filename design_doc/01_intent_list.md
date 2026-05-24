@@ -139,7 +139,7 @@
 
 - **Intent Type**: WRITE
 - **Confidence Threshold Override**: 65
-- **Description**: The admin/host wants to correct the score of a previously recorded match. The user mentions 1-4 player nicknames in chat to narrow which match to edit; the server returns every recorded match whose four-nickname set contains ALL mentioned players. The frontend renders the candidates as a picker; the admin picks one row to expand an inline form prefilled with the current scores, edits the scores, and submits. The corrected scores are NOT extracted from the chat message.
+- **Description**: The user wants to correct the score of a previously recorded match. The user mentions 1-4 player nicknames in chat to narrow which match to edit; the server returns every recorded match whose four-nickname set contains ALL mentioned players. The frontend renders the candidates as a picker; the user picks one row to expand an inline form prefilled with the current scores, edits the scores, and submits. The corrected scores are NOT extracted from the chat message. The league host can edit any match; non-host players can only edit a match that is still within the league's configured player-edit window (the backend enforces this on submission).
 - **Example Messages**:
   - "edit match score for Alice"
   - "fix a match score involving Alice and Bob"
@@ -151,7 +151,6 @@
 | Name | Type | Required | Source |
 |------|------|----------|--------|
 | league_id | string (UUID) | Yes | path |
-| host_token | string (UUID) | Yes | header (X-Host-Token) |
 
 ### Chat-Driven Parameters
 
@@ -167,7 +166,8 @@
 - All four `playerN_nickname` params are individually optional, but the handler returns an `ERROR` response if zero nicknames are extracted.
 - Filtering is case-insensitive and uses ALL semantics: a match is returned only if every mentioned nickname is among the match's four nicknames (in either team, in either ordering).
 - An empty result is NOT an error — the response carries `matches: []` and a `server_message` that explains the ALL semantics so the user understands.
-- The admin enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es `/admin/leagues/{league_id}/matches/{match_id}` directly. The chat-to-intent server is not in the write path.
+- The user enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es `/leagues/{league_id}/matches/{match_id}` directly. The chat-to-intent server is not in the write path.
+- `host_token` is **not** a required request param on this intent (anyone with `league_id` can attempt an edit). Authorization to actually apply the change happens at backend submission time: the player-facing endpoint refuses to edit a match older than the configured window (`PLAYER_SCORE_EDIT_WINDOW_SECONDS`, default 3600s), returning `422 MatchEditWindowExpiredError`; admins who attach `X-Host-Token` bypass the window.
 
 ---
 
