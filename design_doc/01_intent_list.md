@@ -166,8 +166,11 @@
 - All four `playerN_nickname` params are individually optional, but the handler returns an `ERROR` response if zero nicknames are extracted.
 - Filtering is case-insensitive and uses ALL semantics: a match is returned only if every mentioned nickname is among the match's four nicknames (in either team, in either ordering).
 - An empty result is NOT an error — the response carries `matches: []` and a `server_message` that explains the ALL semantics so the user understands.
-- The user enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es `/leagues/{league_id}/matches/{match_id}` directly. The chat-to-intent server is not in the write path.
-- `host_token` is **not** a required request param on this intent (anyone with `league_id` can attempt an edit). Authorization to actually apply the change happens at backend submission time: the player-facing endpoint refuses to edit a match older than the configured window (`PLAYER_SCORE_EDIT_WINDOW_SECONDS`, default 3600s), returning `422 MatchEditWindowExpiredError`; admins who attach `X-Host-Token` bypass the window.
+- The user enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es the URL produced by the handler — one of two routes, picked per-role at chat-response time:
+  - Admin chat request (`X-Host-Token` present) → `/admin/leagues/{league_id}/matches/{match_id}` (no window check; requires `X-Host-Token`).
+  - Player chat request (no token) → `/leagues/{league_id}/matches/{match_id}` (backend enforces `PLAYER_SCORE_EDIT_WINDOW_SECONDS`, default 3600s; returns `422 MatchEditWindowExpiredError` outside the window).
+  The chat-to-intent server is not in the write path.
+- `host_token` is **not** a required request param on this intent (anyone with `league_id` can attempt an edit). The handler is indifferent to *whether* the caller is authorized; the header only changes which downstream URL goes into `url_template`. Final authorization happens at backend submission time. See `03_write_intent_target_endpoints.md` "Authorization (admin URL vs. player URL)" for the full contract.
 
 ---
 

@@ -68,12 +68,38 @@
 ## Intent: EDIT_MATCH_SCORE
 
 - **HTTP Method**: PATCH
-- **URL Pattern**: /leagues/{league_id}/matches/{match_id}
+- **URL Pattern**: chosen per-role at response time:
+  - admin chat request (carries `X-Host-Token`) → `/admin/leagues/{league_id}/matches/{match_id}`
+  - player chat request (no `X-Host-Token`) → `/leagues/{league_id}/matches/{match_id}`
 - **Response Shape**: picker (a list of candidate matches), not a single prefilled `{method, url, body}` payload.
 
 ### Picker Response Shape
 
 Unlike the other write intents, EDIT_MATCH_SCORE returns a candidate list rather than a single prefilled payload, because the user only narrows the match by mentioning 1-4 players in chat. The frontend renders the candidates and lets the user pick a row, expand a prefilled form, edit the scores, and submit.
+
+The handler picks the `url_template` based on whether the chat request carried `X-Host-Token` (see "Authorization" below for the full contract). The two possible shapes:
+
+**Admin caller (token present):**
+
+```json
+{
+  "data_type": "EDIT_MATCH_SCORE",
+  "data": {
+    "league_id": "<league_id>",
+    "method": "PATCH",
+    "url_template": "<backend_base_url>/admin/leagues/<league_id>/matches/{match_id}",
+    "player_filters": ["Alice", "Bob"],
+    "matches": [ /* ... */ ],
+    "body_schema": {
+      "team1_score": { "type": "string", "required": true },
+      "team2_score": { "type": "string", "required": true }
+    }
+  },
+  "server_message": "Showing matches that contain ALL of: Alice, Bob. Pick one to edit its score."
+}
+```
+
+**Player caller (no token):**
 
 ```json
 {
@@ -121,21 +147,29 @@ Unlike the other write intents, EDIT_MATCH_SCORE returns a candidate list rather
 | team1_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team1_score`). |
 | team2_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team2_score`). |
 
-### Authorization (X-Host-Token bypass vs. player window)
+### Authorization (admin URL vs. player URL — chosen at the chat layer)
 
-The `url_template` points at the **player-facing** edit endpoint, not `/admin/...`. The same URL is used by every caller (admin and player). The backend decides:
+The handler picks one of two backend URLs based on whether the **chat request** carried `X-Host-Token`. The chosen URL is the only one the eventual frontend `PATCH` will ever hit; the frontend does not re-route.
 
-- If the request has a valid `X-Host-Token` header, the edit is accepted regardless of the match's age. The frontend attaches the token automatically when the page was opened with `host_token=...` in the URL.
-- If the request has no token, the edit is accepted only while the match is within the configured player-edit window (`PLAYER_SCORE_EDIT_WINDOW_SECONDS`, default 3600s). Outside the window the backend returns `422 MatchEditWindowExpiredError`.
+| Chat caller | `X-Host-Token` on chat request | `url_template` | Backend gate |
+|---|---|---|---|
+| Admin (host opened admin chat URL) | yes | `/admin/leagues/{lid}/matches/{match_id}` | Requires `X-Host-Token`; no time-window check. |
+| Player (anonymous chat) | no | `/leagues/{lid}/matches/{match_id}` | No header required; backend enforces `PLAYER_SCORE_EDIT_WINDOW_SECONDS` and returns `422 MatchEditWindowExpiredError` outside the window. |
 
-This is why `host_token` is *not* a required request param on this intent in `01_intent_list.md`: the chat layer doesn't care about the token; the backend does.
+Why split the URLs at the chat layer instead of having one URL with a server-side bypass:
+
+- "Admin work hits admin URL" stays an invariant that's easy to grep, audit, and add admin-only rate limits / logging to later. There is no path where an admin call lands on the player route.
+- The frontend's URL builders for the per-row Update button (`bindMatchRowUpdateButtons` in `chat.js`) likewise route admin sessions to the admin URL, so the chat-driven picker and the direct-click flow produce identical traffic shapes.
+- `X-Host-Token` is attached by the frontend **iff** the URL is under `/admin/` (see `shouldAttachHostTokenForUrl`). With this split, no player-route call carries the header — keeping the player route's contract truly tokenless.
+
+`host_token` remains *not* a required request param on this intent in `01_intent_list.md` because the handler runs successfully for either audience; it just chooses a different downstream URL. The chat-server requires presence to fork the response, not to authorize.
 
 ### Notes
 
 - Supplementary GET: `GET /leagues/{league_id}/matches`. The handler filters the response to matches whose four-nickname set is a superset of the mentioned nicknames (case-insensitive, ALL semantics). The result is sorted by `created_at` descending.
 - If zero nicknames are extracted from the chat message, the handler returns `ERROR` (status_code 400) asking the user to mention at least one player.
 - If 1+ nicknames are extracted but no match contains all of them, this is NOT an error: the handler still returns `data_type: "EDIT_MATCH_SCORE"` with `matches: []` and a `server_message` that explicitly states the ALL semantics (so the user understands why the list is empty).
-- The handler does NOT filter out matches that are past the player-edit window. All candidate matches are returned regardless of age; the frontend renders disabled rows with a tooltip for players (and lets admins edit them anyway). Server-side filtering would hide rows the admin still wants to edit and would require the handler to know per-deployment window config, which lives outside the chat server.
+- The handler does NOT filter out matches that are past the player-edit window. All candidate matches are returned regardless of age. The frontend's `renderMatchRowUpdateAction` renders the Update button disabled with a tooltip when the row is past the window for a non-admin caller; admin sessions never disable the button because admin chat requests already routed to the admin URL (no window check). Server-side filtering would hide rows the admin still wants to edit and would require the handler to know per-deployment window config, which lives outside the chat server.
 - Scores are entered by the user in the per-row form rendered by the frontend; they are not extracted from the chat message. The form prefills with the match's current scores so the user can correct just the one that was wrong.
 - The `url_template` is "fully resolved" except for the `{match_id}` placeholder, which the frontend substitutes when the user picks a row.
 

@@ -147,9 +147,17 @@ class TestEditPlayerNickname:
 # ---------------------------------------------------------------------------
 
 def _assert_edit_match_score_picker_shape(
-    body: dict, league_id: str
+    body: dict, league_id: str, *, expect_admin_url: bool
 ) -> dict:
-    """Asserts the picker-flow EDIT_MATCH_SCORE response shape and returns body['data']."""
+    """Asserts the picker-flow EDIT_MATCH_SCORE response shape and returns body['data'].
+
+    `expect_admin_url=True` means the chat request carried `X-Host-Token`,
+    in which case the handler is expected to return the admin route
+    (`/admin/leagues/.../matches/{match_id}`). `expect_admin_url=False`
+    means a token-less player request, which should produce the player
+    route (`/leagues/.../matches/{match_id}`). See
+    `design_doc/03_write_intent_target_endpoints.md` (Authorization).
+    """
     assert body["data_type"] != "ERROR", f"Got ERROR: {body['data'].get('error_message')}"
     assert body["data_type"] != "CLARIFICATION_QUESTION", (
         f"Got clarification: {body['data'].get('question')}"
@@ -158,16 +166,22 @@ def _assert_edit_match_score_picker_shape(
     data = body["data"]
     assert data["method"] == "PATCH"
     assert data["league_id"] == league_id
-    # The intent now targets the player-facing edit route (no `/admin/`);
-    # admin requests still work because the backend bypasses the
-    # player-edit window when `X-Host-Token` is attached on submission.
-    assert data["url_template"].endswith(
-        f"/leagues/{league_id}/matches/{{match_id}}"
-    )
-    assert "/admin/" not in data["url_template"], (
-        "EDIT_MATCH_SCORE url_template must target the player route, "
-        "not /admin/. The frontend chooses whether to attach X-Host-Token."
-    )
+    if expect_admin_url:
+        assert data["url_template"].endswith(
+            f"/admin/leagues/{league_id}/matches/{{match_id}}"
+        ), (
+            "Admin chat requests must receive the admin-route url_template "
+            f"so the eventual PATCH hits /admin/. Got: {data['url_template']}"
+        )
+    else:
+        assert data["url_template"].endswith(
+            f"/leagues/{league_id}/matches/{{match_id}}"
+        )
+        assert "/admin/" not in data["url_template"], (
+            "Token-less (player) chat requests must receive the player-route "
+            "url_template — the admin URL must not leak to player sessions. "
+            f"Got: {data['url_template']}"
+        )
     assert isinstance(data["matches"], list)
     assert isinstance(data["player_filters"], list) and data["player_filters"]
     body_schema = data["body_schema"]
@@ -188,12 +202,19 @@ def _match_has_all(match: dict, nicknames: list[str]) -> bool:
 
 @pytest.mark.usefixtures("seeded_league")
 class TestEditMatchScore:
-    """EDIT_MATCH_SCORE is now a player-accessible intent (no X-Host-Token
-    required at the chat layer). The picker tests therefore run WITHOUT
-    the host-token header to exercise the realistic player flow. One
-    admin-parity test below confirms that requests WITH the token still
-    work — the chat server should be indifferent to the header for this
-    intent."""
+    """EDIT_MATCH_SCORE is a player-accessible intent (no X-Host-Token
+    required at the chat layer). It returns one of two `url_template`
+    values depending on whether the chat request carried
+    `X-Host-Token`:
+
+    - token present (admin session) → admin route
+      `/admin/leagues/{league_id}/matches/{match_id}`
+    - token absent (player session) → player route
+      `/leagues/{league_id}/matches/{match_id}`
+
+    The token-less tests below exercise the realistic player flow; the
+    admin-parity test confirms the admin-side fork. Both flows must
+    work end-to-end."""
 
     async def test_picker_returns_matches_for_one_player(
         self, client: AsyncClient, league_id: str
@@ -207,7 +228,9 @@ class TestEditMatchScore:
         )
         assert response.status_code == 200
         body = response.json()
-        data = _assert_edit_match_score_picker_shape(body, league_id)
+        data = _assert_edit_match_score_picker_shape(
+            body, league_id, expect_admin_url=False
+        )
         assert len(data["matches"]) >= 1, (
             "Expected at least one seeded match containing Alice."
         )
@@ -229,7 +252,9 @@ class TestEditMatchScore:
         )
         assert response.status_code == 200
         body = response.json()
-        data = _assert_edit_match_score_picker_shape(body, league_id)
+        data = _assert_edit_match_score_picker_shape(
+            body, league_id, expect_admin_url=False
+        )
         # Only the Alice/Bob vs Charlie/Diana match contains both Alice AND Charlie.
         assert len(data["matches"]) >= 1
         for match in data["matches"]:
@@ -274,12 +299,13 @@ class TestEditMatchScore:
         if body["data_type"] == "ERROR":
             assert body["data"]["status_code"] in (400, 422)
 
-    async def test_picker_with_host_token_still_works_admin_parity(
+    async def test_picker_with_host_token_returns_admin_url(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
-        """Admin parity: a request with X-Host-Token must still return
-        the same picker shape (url_template targets the player route
-        regardless; admin bypasses the window at submission time)."""
+        """Admin-session fork: a chat request that carries
+        `X-Host-Token` must receive a `url_template` pointing at the
+        admin route, so the eventual `PATCH` from the frontend hits
+        `/admin/leagues/.../matches/{match_id}` and is admin-audited."""
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
@@ -290,11 +316,9 @@ class TestEditMatchScore:
         )
         assert response.status_code == 200
         body = response.json()
-        data = _assert_edit_match_score_picker_shape(body, league_id)
-        # url_template must be the player route even when the chat call
-        # carries an admin token — the admin context only matters when
-        # the frontend later PATCHes the backend.
-        assert "/admin/" not in data["url_template"]
+        data = _assert_edit_match_score_picker_shape(
+            body, league_id, expect_admin_url=True
+        )
         assert len(data["matches"]) >= 1
 
 
