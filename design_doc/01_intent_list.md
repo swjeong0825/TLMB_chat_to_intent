@@ -223,3 +223,57 @@
 |------|------|----------|-------|
 | player1_nickname | string | Yes | Nickname of the first player in the team to delete. Used together with player2_nickname to look up the team_id. |
 | player2_nickname | string | Yes | Nickname of the second player in the team to delete. |
+
+---
+
+## Intent: ADD_PLAYERS_TO_ROSTER
+
+- **Intent Type**: WRITE
+- **Confidence Threshold Override**: 80
+- **Description**: The admin/host wants to pre-register one or more players on the league's roster without recording a match for them. Pre-registered players show up in `GET_ROSTER` immediately and become match-eligible when the league's `auto_register_players_on_match` flag is off (only pre-registered nicknames can play). Replaces v5's `ADD_ALLOWLIST_ENTRIES`; the legacy "allowlist" wording is still accepted (and listed in `example_messages`) so existing user phrasing keeps working.
+- **Example Messages**:
+  - "add Alex and Daniel to the roster"
+  - "add Michael to the roster"
+  - "register Jason as a player"
+  - "pre-register Alex Kim, Daniel Park, Jason Lee"
+  - "allow Jason to play"
+  - "add Alex, Daniel, Jason to the allowlist"
+
+### Request Parameters
+
+| Name | Type | Required | Source |
+|------|------|----------|--------|
+| league_id | string (UUID) | Yes | path |
+| host_token | string (UUID) | Yes | header (X-Host-Token) |
+
+### Chat-Driven Parameters
+
+| Name | Type | Required | Notes |
+|------|------|----------|-------|
+| nicknames | list[string] | Yes | One or more nicknames to pre-register on the league's roster. Bare scalar strings are coerced to a one-element list. |
+
+---
+
+## Intent: REMOVE_PLAYER_FROM_ROSTER
+
+- **Intent Type**: WRITE
+- **Confidence Threshold Override**: 80
+- **Description**: The admin/host wants to remove a pre-registered player from the league's roster. The DELETE only succeeds when the player has no teams and no matches; otherwise the backend returns 409 `PlayerHasParticipationError`. Replaces v5's `REMOVE_ALLOWLIST_ENTRY`; the legacy "allowlist" wording is still accepted.
+- **Example Messages**:
+  - "remove Michael from the roster"
+  - "drop Ryan from the roster"
+  - "Daniel is no longer on the roster"
+  - "remove Michael from the allowlist"
+
+### Request Parameters
+
+| Name | Type | Required | Source |
+|------|------|----------|--------|
+| league_id | string (UUID) | Yes | path |
+| host_token | string (UUID) | Yes | header (X-Host-Token) |
+
+### Chat-Driven Parameters
+
+| Name | Type | Required | Notes |
+|------|------|----------|-------|
+| nickname | string | Yes | The nickname to remove from the league's roster. Resolved to `player_id` via `GET /leagues/{league_id}/roster`. |

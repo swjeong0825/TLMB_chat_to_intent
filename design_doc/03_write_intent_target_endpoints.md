@@ -184,3 +184,52 @@ Unlike the other write intents, EDIT_MATCH_SCORE returns a candidate list rather
 - This is a destructive, irreversible operation. The threshold is set to 85.
 - The backend rejects team deletion if the team still has associated match records (TeamHasMatchesError → 409). The host must delete all associated matches first. This precondition cannot be pre-validated at this layer — the frontend will receive a 409 error if the team has remaining matches. The handler may optionally note this precondition in `server_message`.
 
+---
+
+## Intent: ADD_PLAYERS_TO_ROSTER
+
+- **HTTP Method**: POST
+- **URL Pattern**: /admin/leagues/{league_id}/players
+
+### Path Parameter Mapping
+
+| URL Path Param | Resolved from (intent param name) |
+| -------------- | --------------------------------- |
+| league_id      | league_id                         |
+
+### Request Body Fields
+
+| Field Name | Type          | Required | Enum Options | Resolved from (intent param name) |
+| ---------- | ------------- | -------- | ------------ | --------------------------------- |
+| nicknames  | array[string] | Yes      | —            | nicknames                         |
+
+### Notes
+
+- No supplementary GET — the handler is a pure prefilled-form passthrough.
+- The chat-driven `nicknames` parameter is a list. The handler coerces a bare scalar string into a one-element list to cover LLMs that return a single string instead of a JSON array.
+- Replaces v5's `ADD_ALLOWLIST_ENTRIES`. The `allowlist_entries` side table was retired in alembic 007; pre-registration now writes `Player` rows directly. The backend's `POST /admin/leagues/{league_id}/players` enforces case-insensitive nickname uniqueness within the league and against in-batch duplicates (409 `NicknameAlreadyInUseError`).
+
+---
+
+## Intent: REMOVE_PLAYER_FROM_ROSTER
+
+- **HTTP Method**: DELETE
+- **URL Pattern**: /admin/leagues/{league_id}/players/{player_id}
+
+### Path Parameter Mapping
+
+| URL Path Param | Resolved from (intent param name)                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| league_id      | league_id                                                                                                                                          |
+| player_id      | Resolved by handler: GET /leagues/{league_id}/roster → look up player by `nickname` (case-insensitive) in the `players` list → extract `player_id` |
+
+### Request Body Fields
+
+(none — DELETE operation has no request body)
+
+### Notes
+
+- Supplementary GET: `GET /leagues/{league_id}/roster`. The handler resolves `player_id` from the spoken nickname. If the nickname is not found on the roster, the handler returns `CLARIFICATION_QUESTION` listing the actual roster nicknames so the host can pick the correct one.
+- Replaces v5's `REMOVE_ALLOWLIST_ENTRY`. The backend's `DELETE /admin/leagues/{league_id}/players/{player_id}` is **hard-delete with a participation guard**: it only succeeds when the player has zero teams AND zero matches. Otherwise the backend returns 409 `PlayerHasParticipationError` with the participation counts; the frontend renders this as a user-facing message (it cannot be pre-validated at this layer).
+- The "remove from allowlist" wording is intentionally retained in `example_messages` so existing user phrasing still routes here.
+

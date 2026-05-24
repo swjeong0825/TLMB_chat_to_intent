@@ -9,13 +9,14 @@ class SubmitMatchResultHandler(BaseIntentHandler):
     Assembles a prefilled payload for POST /leagues/{league_id}/matches.
     No supplementary GET calls needed — the backend auto-registers new players/teams.
 
-    NotInAllowlistError (HTTP 422) handling note:
-    When LeagueRules.require_allowlist=true, the backend returns a 422
-    with {"error": "NotInAllowlistError", "missing_nicknames": [...]}. This
-    handler is a prefilled-form passthrough and never calls the backend itself,
-    so the 422 only surfaces when the FRONTEND submits the form. The friendly
-    user-facing message and the "+ Add to allowlist" button are rendered
-    in js/user-facing-errors.js and the submitBackendAction branch in chat.js.
+    RosterMembershipRequiredError (HTTP 422) handling note:
+    When LeagueRules.auto_register_players_on_match=false, the backend returns
+    a 422 with {"error": "RosterMembershipRequiredError", "missing_nicknames":
+    [...]}. This handler is a prefilled-form passthrough and never calls the
+    backend itself, so the 422 only surfaces when the FRONTEND submits the
+    form. The friendly user-facing message and the "+ Add to roster" button
+    are rendered in js/user-facing-errors.js and the submitBackendAction
+    branch in chat.js.
     """
 
     def __init__(self, backend_base_url: str) -> None:

@@ -196,6 +196,42 @@ X-Host-Token: {{host_token}}
   "last_server_message": ""
 }
 
+###
+
+### ADD_PLAYERS_TO_ROSTER — pre-register one or more players
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Add Alex and Daniel to the roster",
+  "last_server_message": ""
+}
+
+###
+
+### ADD_PLAYERS_TO_ROSTER — legacy 'allowlist' phrasing still works
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Add Michael to the allowlist",
+  "last_server_message": ""
+}
+
+###
+
+### REMOVE_PLAYER_FROM_ROSTER — drop a pre-registered player
+POST {{baseUrl}}/leagues/{{league_id}}/chat
+Content-Type: application/json
+X-Host-Token: {{host_token}}
+
+{
+  "client_message": "Remove Alex from the roster",
+  "last_server_message": ""
+}
+
 
 # ============================================================
 # EDGE CASES

@@ -163,27 +163,6 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
-            name="GET_ALLOWLIST",
-            intent_type=IntentType.READ,
-            confidence_threshold=70,
-            required_request_params=[_LEAGUE_ID_PARAM],
-            description=(
-                "The user wants to see the host-curated allowlist — the list of "
-                "nicknames that are ALLOWED to participate in the league. Distinct "
-                "from GET_ROSTER, which returns players who have already played at "
-                "least one match."
-            ),
-            summary="Show the league's allowlist.",
-            example_messages=[
-                "who can join this league?",
-                "show me the allowlist",
-                "show all allowed players",
-                "who is allowed to play in this league?",
-                "list the allowlist entries",
-            ],
-        ),
-
-        IntentDefinition(
             name="HELP",
             intent_type=IntentType.READ,
             confidence_threshold=70,
@@ -377,7 +356,7 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
-            name="ADD_ALLOWLIST_ENTRIES",
+            name="ADD_PLAYERS_TO_ROSTER",
             intent_type=IntentType.WRITE,
             confidence_threshold=80,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
@@ -385,26 +364,32 @@ class IntentRegistry:
                 ParamDef(
                     "nicknames",
                     list,
-                    "One or more nicknames to add to the league's allowlist",
+                    "One or more nicknames to pre-register on the league's roster",
                 ),
             ],
             description=(
-                "The admin/host wants to add one or more nicknames to the league's "
-                "allowlist. The allowlist controls who is ALLOWED to play; it is "
-                "independent of the actual roster (players who have already played)."
+                "The admin/host wants to pre-register one or more players on the "
+                "league's roster without recording a match for them. Pre-registered "
+                "players show up in GET_ROSTER immediately and become match-eligible "
+                "when the league's `auto_register_players_on_match` flag is off "
+                "(meaning only pre-registered nicknames can play). The frontend "
+                "should use this intent for 'add to roster' / 'allow X to play' "
+                "requests; the legacy 'allowlist' wording also maps here (the "
+                "allowlist concept was retired)."
             ),
-            summary="Add nicknames to the allowlist.",
+            summary="Pre-register players on the roster.",
             example_messages=[
-                "add Alex and Daniel to the allowlist",
-                "add Michael to the allowlist",
+                "add Alex and Daniel to the roster",
+                "add Michael to the roster",
+                "register Jason as a player",
+                "pre-register Alex Kim, Daniel Park, Jason Lee",
                 "allow Jason to play",
-                "register Alex Kim, Daniel Park, Jason Lee on the allowlist",
-                "set the allowlist: Alex, Daniel, Jason",
+                "add Alex, Daniel, Jason to the allowlist",
             ],
         ),
 
         IntentDefinition(
-            name="REMOVE_ALLOWLIST_ENTRY",
+            name="REMOVE_PLAYER_FROM_ROSTER",
             intent_type=IntentType.WRITE,
             confidence_threshold=80,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
@@ -412,18 +397,23 @@ class IntentRegistry:
                 ParamDef(
                     "nickname",
                     str,
-                    "The nickname to remove from the league's allowlist",
+                    "The nickname to remove from the league's roster",
                 ),
             ],
             description=(
-                "The admin/host wants to remove a single nickname from the league's "
-                "allowlist. Does NOT remove any roster Player record."
+                "The admin/host wants to remove a pre-registered player from the "
+                "league's roster. The DELETE only succeeds when the player has no "
+                "teams and no matches; otherwise the backend returns 409 "
+                "`PlayerHasParticipationError`. The frontend's error renderer "
+                "surfaces that to the user. The legacy 'remove from allowlist' "
+                "wording also maps here."
             ),
-            summary="Remove one nickname from the allowlist.",
+            summary="Remove one player from the roster.",
             example_messages=[
+                "remove Michael from the roster",
+                "drop Ryan from the roster",
+                "Daniel is no longer on the roster",
                 "remove Michael from the allowlist",
-                "drop Ryan from the allowlist",
-                "Daniel is no longer on the allowlist",
             ],
         ),
     ]

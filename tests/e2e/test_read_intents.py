@@ -227,61 +227,30 @@ class TestGetMatchHistoryByPlayer:
 
 
 # ---------------------------------------------------------------------------
-# GET_ALLOWLIST
+# GET_ROSTER — pre-registered players visible
 # ---------------------------------------------------------------------------
 
 @pytest.mark.usefixtures("seeded_league")
-class TestGetAllowlist:
+class TestGetRosterIncludesPreregisteredPlayers:
+    """The v6 roster *is* the v5 allowlist: players added via
+    `POST /admin/leagues/{id}/players` show up immediately in
+    GET_ROSTER, even without a match record. Phrases like 'who is
+    allowed to play?' that used to map to GET_ALLOWLIST now map to
+    GET_ROSTER (the allowlist concept was retired in v6)."""
 
-    async def test_show_allowlist(self, client: AsyncClient, league_id: str):
+    async def test_preregistered_players_show_up_in_roster(
+        self, client: AsyncClient, league_id: str
+    ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            json={"client_message": "show me the allowlist", "last_server_message": ""},
+            json={"client_message": "show me the roster", "last_server_message": ""},
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "GET_ALLOWLIST"
-        assert "allowlist" in body["data"]
-        assert isinstance(body["data"]["allowlist"], list)
-        assert body["server_message"] == ""
-
-    async def test_allowlist_phrase_variant(self, client: AsyncClient, league_id: str):
-        response = await client.post(
-            f"/leagues/{league_id}/chat",
-            json={"client_message": "who is allowed to play in this league?", "last_server_message": ""},
-        )
-        assert response.status_code == 200
-        body = response.json()
-        assert body["data_type"] == "GET_ALLOWLIST"
-
-    async def test_allowlist_has_seeded_entries(self, client: AsyncClient, league_id: str):
-        response = await client.post(
-            f"/leagues/{league_id}/chat",
-            json={"client_message": "list the allowlist", "last_server_message": ""},
-        )
-        assert response.status_code == 200
-        body = response.json()
-        assert body["data_type"] == "GET_ALLOWLIST"
-        allowlist = body["data"]["allowlist"]
-        # Seeded in conftest: alex, daniel, jason
-        nicknames = {entry["nickname"].lower() for entry in allowlist}
-        assert "alex" in nicknames
-        assert "daniel" in nicknames
-        assert "jason" in nicknames
-
-    async def test_allowlist_entry_shape(self, client: AsyncClient, league_id: str):
-        response = await client.post(
-            f"/leagues/{league_id}/chat",
-            json={"client_message": "show all allowed players", "last_server_message": ""},
-        )
-        assert response.status_code == 200
-        body = response.json()
-        assert body["data_type"] == "GET_ALLOWLIST"
-        allowlist = body["data"]["allowlist"]
-        if allowlist:
-            entry = allowlist[0]
-            assert "allowlist_entry_id" in entry
-            assert "nickname" in entry
+        assert body["data_type"] == "GET_ROSTER"
+        nicknames = {p["nickname"].lower() for p in body["data"]["players"]}
+        for nick in ("alex", "daniel", "jason"):
+            assert nick in nicknames
 
 
 # ---------------------------------------------------------------------------
