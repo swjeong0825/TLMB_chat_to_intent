@@ -7,7 +7,7 @@
 
 ## GET /leagues/{league_id}/standings
 
-- **Description**: Returns the ranked win/loss standings for all pairs in the league. Standings are always computed on the fly from match records.
+- **Description**: Returns the ranked win/loss standings for the league. By default this uses the league's configured ranking subject. Callers may request a read-only projection with `subject=pair` or `subject=player`. Standings are always computed on the fly from match records.
 - **Used by Intents**: GET_STANDINGS
 
 ### Path Parameters
@@ -18,7 +18,11 @@
 
 ### Query Parameters
 
-(none)
+| Name | Type | Description |
+|------|------|-------------|
+| subject | optional string enum (`pair` or `player`) | Read-only projection override. Omit to use the league's configured ranking subject. |
+| start_date | optional date (`YYYY-MM-DD`) | Inclusive league-local start date. Used by the frontend when filtering an already-rendered standings panel. |
+| end_date | optional date (`YYYY-MM-DD`) | Inclusive league-local end date. Used by the frontend when filtering an already-rendered standings panel. |
 
 ### Response Schema
 
@@ -48,6 +52,7 @@
 
 ### Notes
 - Returns 404 if the league does not exist. The handler should surface this as an ERROR response (status_code 502).
+- Returns 422 if `subject` is not `pair` or `player`, or if the date range is invalid.
 - Tied subjects share the same rank (standard-competition ranking — see backend design doc 17).
 - The response may be an empty `standings` array if no matches have been recorded yet; `tie_breakers` is still populated from the league's rules.
 - `tie_breakers` is forwarded to the frontend so it can label the displayed metric column to match the league's primary tie-breaker (e.g. "Games won" vs "Games ±").
