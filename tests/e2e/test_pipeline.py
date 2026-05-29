@@ -44,7 +44,7 @@ class TestClarificationFlow:
         response = await client.post(
             f"/leagues/{league_id}/chat",
             json={
-                "client_message": "show me the standings and also delete Alice and Bob's team",
+                "client_message": "show me the standings and also delete Alice and Bob's pair",
                 "last_server_message": "",
             },
         )
@@ -56,7 +56,7 @@ class TestClarificationFlow:
         assert body["data_type"] in (
             "CLARIFICATION_QUESTION",
             "GET_STANDINGS",
-            "DELETE_TEAM",
+            "DELETE_PAIR",
             "ERROR",
         )
 

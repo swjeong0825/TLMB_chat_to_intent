@@ -45,8 +45,8 @@ class IntentRegistry:
             required_request_params=[_LEAGUE_ID_PARAM],
             description=(
                 "The user wants to see the league's current standings — the configured "
-                "ranking for the league (teams or players, in the league's tie-breaker "
-                "order). Some leagues rank by team and some by individual player; "
+                "ranking for the league (pairs or players, in the league's tie-breaker "
+                "order). Some leagues rank by pair and some by individual player; "
                 "either way, this intent returns the full leaderboard."
             ),
             summary="Show League leaderboard.",
@@ -94,7 +94,7 @@ class IntentRegistry:
             description=(
                 "The user wants the standings row for a specific named player. "
                 "Depending on the league configuration this is either the player's "
-                "own row (player-ranked leagues) or their team's row (team-ranked "
+                "own row (player-ranked leagues) or their pair's row (pair-ranked "
                 "leagues); the backend selects the correct shape automatically. "
                 "A player name is clearly mentioned and the focus is on "
                 "standing/rank/position, not match-by-match history. "
@@ -105,10 +105,10 @@ class IntentRegistry:
             summary="Show one player's standings row.",
             example_messages=[
                 "what's Alice's rank in the league?",
-                "where does Bob's team stand?",
+                "where does Bob's pair stand?",
                 "show me Charlie's standing",
                 "how is Diana doing in the standings?",
-                "what place is Emma's team?",
+                "what place is Emma's pair?",
                 "where does Alice rank individually?",
                 "what's Bob's individual standing?",
             ],
@@ -131,7 +131,7 @@ class IntentRegistry:
                 "A player name is clearly mentioned in the message. "
                 "Use GET_MATCH_HISTORY instead when no specific player is mentioned. "
                 "Use GET_STANDINGS_BY_PLAYER when they ask for rank, standing, or leaderboard position "
-                "for that player's team rather than a list of matches."
+                "for that player's pair rather than a list of matches."
             ),
             summary="Show one player's match history.",
             example_messages=[
@@ -150,14 +150,14 @@ class IntentRegistry:
             confidence_threshold=70,
             required_request_params=[_LEAGUE_ID_PARAM],
             description=(
-                "The user wants to see the list of all registered players and teams in the league."
+                "The user wants to see the list of all registered players and pairs in the league."
             ),
-            summary="Show all registered players and teams.",
+            summary="Show all registered players and pairs.",
             example_messages=[
                 "show me all the players",
                 "who's in the league?",
                 "show me the roster",
-                "list all teams",
+                "list all pairs",
                 "who are the registered players?",
             ],
         ),
@@ -201,12 +201,12 @@ class IntentRegistry:
             confidence_threshold=70,
             required_request_params=[_LEAGUE_ID_PARAM],
             optional_chat_params=[
-                ParamDef("team1_player1_nickname", str, "Nickname of the first player on team 1"),
-                ParamDef("team1_player2_nickname", str, "Nickname of the second player on team 1"),
-                ParamDef("team2_player1_nickname", str, "Nickname of the first player on team 2"),
-                ParamDef("team2_player2_nickname", str, "Nickname of the second player on team 2"),
-                ParamDef("team1_score", str, "Score for team 1 as a non-negative integer string"),
-                ParamDef("team2_score", str, "Score for team 2 as a non-negative integer string"),
+                ParamDef("pair1_player1_nickname", str, "Nickname of the first player on pair 1"),
+                ParamDef("pair1_player2_nickname", str, "Nickname of the second player on pair 1"),
+                ParamDef("pair2_player1_nickname", str, "Nickname of the first player on pair 2"),
+                ParamDef("pair2_player2_nickname", str, "Nickname of the second player on pair 2"),
+                ParamDef("pair1_score", str, "Score for pair 1 as a non-negative integer string"),
+                ParamDef("pair2_score", str, "Score for pair 2 as a non-negative integer string"),
             ],
             description=(
                 "The user wants to record a doubles match result. This intent applies whenever the "
@@ -216,7 +216,7 @@ class IntentRegistry:
                 "to fill in. Therefore, classify bare/info-less requests like 'record match', "
                 "'submit a match', 'log a result', 'I want to enter a match' as this intent with "
                 "high confidence — do NOT ask a clarification question for missing players or "
-                "scores. New players and teams are automatically registered if they haven't played "
+                "scores. New players and pairs are automatically registered if they haven't played "
                 "before."
             ),
             summary="Record a doubles match result.",
@@ -323,14 +323,14 @@ class IntentRegistry:
             confidence_threshold=85,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
             required_chat_params=[
-                ParamDef("team1_player1_nickname", str, "First player of team 1 — used to identify the match"),
-                ParamDef("team1_player2_nickname", str, "Second player of team 1 — used to identify the match"),
-                ParamDef("team2_player1_nickname", str, "First player of team 2 — used to identify the match"),
-                ParamDef("team2_player2_nickname", str, "Second player of team 2 — used to identify the match"),
+                ParamDef("pair1_player1_nickname", str, "First player of pair 1 — used to identify the match"),
+                ParamDef("pair1_player2_nickname", str, "Second player of pair 1 — used to identify the match"),
+                ParamDef("pair2_player1_nickname", str, "First player of pair 2 — used to identify the match"),
+                ParamDef("pair2_player2_nickname", str, "Second player of pair 2 — used to identify the match"),
             ],
             description=(
                 "The admin/host wants to permanently delete a match record from the league. "
-                "The match is identified by the four player nicknames across both teams."
+                "The match is identified by the four player nicknames across both pairs."
             ),
             summary="Delete a match (need four players).",
             example_messages=[
@@ -341,25 +341,25 @@ class IntentRegistry:
         ),
 
         IntentDefinition(
-            name="DELETE_TEAM",
+            name="DELETE_PAIR",
             intent_type=IntentType.WRITE,
             confidence_threshold=85,
             required_request_params=[_LEAGUE_ID_PARAM, _HOST_TOKEN_PARAM],
             required_chat_params=[
-                ParamDef("player1_nickname", str, "Nickname of the first player in the team to delete"),
-                ParamDef("player2_nickname", str, "Nickname of the second player in the team to delete"),
+                ParamDef("player1_nickname", str, "Nickname of the first player in the pair to delete"),
+                ParamDef("player2_nickname", str, "Nickname of the second player in the pair to delete"),
             ],
             description=(
-                "The admin/host wants to permanently delete a team from the league roster. "
-                "The team is identified by its two player nicknames. "
-                "The team must have no associated match records before it can be deleted."
+                "The admin/host wants to permanently delete a pair from the league roster. "
+                "The pair is identified by its two player nicknames. "
+                "The pair must have no associated match records before it can be deleted."
             ),
-            summary="Delete a team with no matches.",
+            summary="Delete a pair with no matches.",
             example_messages=[
-                "delete the team Alice and Bob",
-                "remove Alice and Bob's team from the league",
-                "delete the team formed by John and Sarah",
-                "get rid of Mike and Emma's team",
+                "delete the pair Alice and Bob",
+                "remove Alice and Bob's pair from the league",
+                "delete the pair formed by John and Sarah",
+                "get rid of Mike and Emma's pair",
             ],
         ),
 
@@ -411,7 +411,7 @@ class IntentRegistry:
             description=(
                 "The admin/host wants to remove a pre-registered player from the "
                 "league's roster. The DELETE only succeeds when the player has no "
-                "teams and no matches; otherwise the backend returns 409 "
+                "pairs and no matches; otherwise the backend returns 409 "
                 "`PlayerHasParticipationError`. The frontend's error renderer "
                 "surfaces that to the user. The legacy 'remove from allowlist' "
                 "wording also maps here."

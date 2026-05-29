@@ -11,8 +11,8 @@ class GetStandingsByPlayerHandler(BaseIntentHandler):
     Fetches the league standings row for the named player via
     GET /leagues/{league_id}/standings/by-player?player_name={player_name}.
 
-    The backend response is polymorphic on `subject_kind`: for team-ranked
-    leagues it is the player's team row; for player-ranked leagues it is the
+    The backend response is polymorphic on `subject_kind`: for pair-ranked
+    leagues it is the player's pair row; for player-ranked leagues it is the
     player's own row. This handler forwards the JSON body verbatim and does
     not parse individual fields, so it tolerates either shape transparently.
     See backend_main design doc 17.

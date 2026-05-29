@@ -26,7 +26,7 @@ from app.infrastructure.providers.read_only_backend_client import ReadOnlyBacken
 from app.intents.base_intent_handler import BaseIntentHandler
 from app.intents.handlers.add_players_to_roster_handler import AddPlayersToRosterHandler
 from app.intents.handlers.delete_match_handler import DeleteMatchHandler
-from app.intents.handlers.delete_team_handler import DeleteTeamHandler
+from app.intents.handlers.delete_pair_handler import DeletePairHandler
 from app.intents.handlers.edit_match_score_handler import EditMatchScoreHandler
 from app.intents.handlers.edit_player_nickname_handler import EditPlayerNicknameHandler
 from app.intents.handlers.get_match_history_by_player_handler import GetMatchHistoryByPlayerHandler
@@ -88,7 +88,7 @@ def _build_chat_handler() -> ChatHandler:
         "EDIT_PLAYER_NICKNAME": EditPlayerNicknameHandler(gateway, base_url),
         "EDIT_MATCH_SCORE": EditMatchScoreHandler(gateway, base_url),
         "DELETE_MATCH": DeleteMatchHandler(gateway, base_url),
-        "DELETE_TEAM": DeleteTeamHandler(gateway, base_url),
+        "DELETE_PAIR": DeletePairHandler(gateway, base_url),
         "ADD_PLAYERS_TO_ROSTER": AddPlayersToRosterHandler(base_url),
         "REMOVE_PLAYER_FROM_ROSTER": RemovePlayerFromRosterHandler(gateway, base_url),
     }

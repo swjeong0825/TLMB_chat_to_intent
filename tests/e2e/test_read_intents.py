@@ -107,9 +107,9 @@ class TestGetMatchHistory:
         if matches:
             m = matches[0]
             assert "match_id" in m
-            assert "team1_player1_nickname" in m
-            assert "team1_score" in m
-            assert "team2_score" in m
+            assert "pair1_player1_nickname" in m
+            assert "pair1_score" in m
+            assert "pair2_score" in m
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +128,7 @@ class TestGetRoster:
         body = response.json()
         assert body["data_type"] == "GET_ROSTER"
         assert "players" in body["data"]
-        assert "teams" in body["data"]
+        assert "pairs" in body["data"]
 
     async def test_roster_has_seeded_players(self, client: AsyncClient, league_id: str):
         response = await client.post(
@@ -146,16 +146,16 @@ class TestGetRoster:
         assert "charlie" in nicknames
         assert "diana" in nicknames
 
-    async def test_roster_has_seeded_teams(self, client: AsyncClient, league_id: str):
+    async def test_roster_has_seeded_pairs(self, client: AsyncClient, league_id: str):
         response = await client.post(
             f"/leagues/{league_id}/chat",
-            json={"client_message": "list all teams", "last_server_message": ""},
+            json={"client_message": "list all pairs", "last_server_message": ""},
         )
         assert response.status_code == 200
         body = response.json()
         assert body["data_type"] == "GET_ROSTER"
-        teams = body["data"]["teams"]
-        assert len(teams) >= 2
+        pairs = body["data"]["pairs"]
+        assert len(pairs) >= 2
 
 
 # ---------------------------------------------------------------------------
@@ -211,9 +211,9 @@ class TestGetMatchHistoryByPlayer:
         if matches:
             m = matches[0]
             assert "match_id" in m
-            assert "team1_player1_nickname" in m
-            assert "team1_score" in m
-            assert "team2_score" in m
+            assert "pair1_player1_nickname" in m
+            assert "pair1_score" in m
+            assert "pair2_score" in m
 
     async def test_phrase_variant(self, client: AsyncClient, league_id: str):
         response = await client.post(
@@ -282,7 +282,7 @@ class TestGetStandingsByPlayer:
         response = await client.post(
             f"/leagues/{league_id}/chat",
             json={
-                "client_message": "where does Bob's team stand in the standings?",
+                "client_message": "where does Bob's pair stand in the standings?",
                 "last_server_message": "",
             },
         )
@@ -291,15 +291,15 @@ class TestGetStandingsByPlayer:
         assert body["data_type"] == "GET_STANDINGS_BY_PLAYER"
         standings = body["data"]["standings"]
         # Under v3 rules the standings array may contain >=1 rows:
-        #   - (team, OTPP=true): exactly 1 row (the player's team)
-        #   - (team, OTPP=false): N rows when the player belongs to N teams
+        #   - (pair, OTPP=true): exactly 1 row (the player's pair)
+        #   - (pair, OTPP=false): N rows when the player belongs to N pairs
         #   - (player, OTPP=false): exactly 1 row (the player's own row)
         # We assert the row shape on the first row only and rely on the
-        # team_id field being present because the seeded fixture currently
-        # uses team-subject rules. See design_doc/configurable_ranking_v3.md.
+        # pair_id field being present because the seeded fixture currently
+        # uses pair-subject rules. See design_doc/configurable_ranking_v3.md.
         if standings:
             row = standings[0]
             assert "rank" in row
             assert "wins" in row
             assert "losses" in row
-            assert "team_id" in row
+            assert "pair_id" in row

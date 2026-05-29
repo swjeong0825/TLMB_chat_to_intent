@@ -1,6 +1,6 @@
 """
 E2E tests for Write intents: SUBMIT_MATCH_RESULT, EDIT_PLAYER_NICKNAME,
-EDIT_MATCH_SCORE, DELETE_MATCH, DELETE_TEAM.
+EDIT_MATCH_SCORE, DELETE_MATCH, DELETE_PAIR.
 
 Write intent handlers never mutate the backend — they return a pre-filled
 payload (method, url, body) for the frontend to review and submit. These
@@ -51,10 +51,10 @@ class TestSubmitMatchResult:
         assert body["data_type"] == "SUBMIT_MATCH_RESULT"
         payload_body = _assert_prefilled_payload(body, "POST", f"/leagues/{league_id}/matches")
 
-        assert payload_body["team1_nicknames"]["value"] == ["Alice", "Bob"]
-        assert payload_body["team2_nicknames"]["value"] == ["Charlie", "Diana"]
-        assert payload_body["team1_score"]["value"] == "6"
-        assert payload_body["team2_score"]["value"] == "3"
+        assert payload_body["pair1_nicknames"]["value"] == ["Alice", "Bob"]
+        assert payload_body["pair2_nicknames"]["value"] == ["Charlie", "Diana"]
+        assert payload_body["pair1_score"]["value"] == "6"
+        assert payload_body["pair2_score"]["value"] == "3"
 
     async def test_submit_match_slash_notation(self, client: AsyncClient, league_id: str):
         response = await client.post(
@@ -69,10 +69,10 @@ class TestSubmitMatchResult:
         assert body["data_type"] == "SUBMIT_MATCH_RESULT"
         payload_body = _assert_prefilled_payload(body, "POST", f"/leagues/{league_id}/matches")
         # Scores are optional chat params — verify values when the LLM extracted them.
-        if payload_body["team1_score"]["value"] is not None:
-            assert payload_body["team1_score"]["value"] == "6"
-        if payload_body["team2_score"]["value"] is not None:
-            assert payload_body["team2_score"]["value"] == "2"
+        if payload_body["pair1_score"]["value"] is not None:
+            assert payload_body["pair1_score"]["value"] == "6"
+        if payload_body["pair2_score"]["value"] is not None:
+            assert payload_body["pair2_score"]["value"] == "2"
 
     async def test_submit_prefilled_body_marks_fields_required_for_downstream_api(
         self, client: AsyncClient, league_id: str
@@ -89,10 +89,10 @@ class TestSubmitMatchResult:
         body = response.json()
         assert body["data_type"] == "SUBMIT_MATCH_RESULT"
         payload_body = body["data"]["body"]
-        assert payload_body["team1_nicknames"]["required"] is True
-        assert payload_body["team2_nicknames"]["required"] is True
-        assert payload_body["team1_score"]["required"] is True
-        assert payload_body["team2_score"]["required"] is True
+        assert payload_body["pair1_nicknames"]["required"] is True
+        assert payload_body["pair2_nicknames"]["required"] is True
+        assert payload_body["pair1_score"]["required"] is True
+        assert payload_body["pair2_score"]["required"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -185,17 +185,17 @@ def _assert_edit_match_score_picker_shape(
     assert isinstance(data["matches"], list)
     assert isinstance(data["player_filters"], list) and data["player_filters"]
     body_schema = data["body_schema"]
-    assert body_schema["team1_score"] == {"type": "string", "required": True}
-    assert body_schema["team2_score"] == {"type": "string", "required": True}
+    assert body_schema["pair1_score"] == {"type": "string", "required": True}
+    assert body_schema["pair2_score"] == {"type": "string", "required": True}
     return data
 
 
 def _match_has_all(match: dict, nicknames: list[str]) -> bool:
     in_match = {
-        (match.get("team1_player1_nickname") or "").lower(),
-        (match.get("team1_player2_nickname") or "").lower(),
-        (match.get("team2_player1_nickname") or "").lower(),
-        (match.get("team2_player2_nickname") or "").lower(),
+        (match.get("pair1_player1_nickname") or "").lower(),
+        (match.get("pair1_player2_nickname") or "").lower(),
+        (match.get("pair2_player1_nickname") or "").lower(),
+        (match.get("pair2_player2_nickname") or "").lower(),
     }
     return {n.lower() for n in nicknames}.issubset(in_match)
 
@@ -237,8 +237,8 @@ class TestEditMatchScore:
         for match in data["matches"]:
             assert _match_has_all(match, ["Alice"])
             assert "match_id" in match
-            assert "team1_score" in match
-            assert "team2_score" in match
+            assert "pair1_score" in match
+            assert "pair2_score" in match
 
     async def test_picker_filters_by_two_players_all_of(
         self, client: AsyncClient, league_id: str
@@ -493,44 +493,44 @@ class TestRemovePlayerFromRoster:
 
 
 # ---------------------------------------------------------------------------
-# DELETE_TEAM
+# DELETE_PAIR
 # ---------------------------------------------------------------------------
 
 @pytest.mark.usefixtures("seeded_league")
-class TestDeleteTeam:
+class TestDeletePair:
 
-    async def test_delete_existing_team_returns_payload(
+    async def test_delete_existing_pair_returns_payload(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "delete the team Alice and Bob",
+                "client_message": "delete the pair Alice and Bob",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["data_type"] == "DELETE_TEAM"
-        _assert_prefilled_payload(body, "DELETE", f"/admin/leagues/{league_id}/teams/")
+        assert body["data_type"] == "DELETE_PAIR"
+        _assert_prefilled_payload(body, "DELETE", f"/admin/leagues/{league_id}/pairs/")
         assert body["data"]["body"] == {}
 
-    async def test_delete_team_not_found_returns_error(
+    async def test_delete_pair_not_found_returns_error(
         self, client: AsyncClient, league_id: str, host_token: str
     ):
         response = await client.post(
             f"/leagues/{league_id}/chat",
             headers={"X-Host-Token": host_token},
             json={
-                "client_message": "delete the team formed by Nobody and Ghost",
+                "client_message": "delete the pair formed by Nobody and Ghost",
                 "last_server_message": "",
             },
         )
         assert response.status_code == 200
         body = response.json()
         # LLM may return CLARIFICATION_QUESTION (low confidence on invented names)
-        # or ERROR (502) when the intent is classified but the backend can't find the team.
+        # or ERROR (502) when the intent is classified but the backend can't find the pair.
         assert body["data_type"] in ("ERROR", "CLARIFICATION_QUESTION")
         if body["data_type"] == "ERROR":
             assert body["data"]["status_code"] == 502

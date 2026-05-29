@@ -922,8 +922,8 @@ No changes to the router, chat handler, parameter resolver, or intent identifier
     "season_id": 3,
     "season_name": "Season 3",
     "standings": [
-      { "rank": 1, "team_name": "Red Dragons", "played": 10, "won": 8, "drawn": 1, "lost": 1, "points": 25 },
-      { "rank": 2, "team_name": "Blue Hawks", "played": 10, "won": 6, "drawn": 2, "lost": 2, "points": 20 }
+      { "rank": 1, "pair_name": "Red Dragons", "played": 10, "won": 8, "drawn": 1, "lost": 1, "points": 25 },
+      { "rank": 2, "pair_name": "Blue Hawks", "played": 10, "won": 6, "drawn": 2, "lost": 2, "points": 20 }
     ]
   },
   "server_message": ""

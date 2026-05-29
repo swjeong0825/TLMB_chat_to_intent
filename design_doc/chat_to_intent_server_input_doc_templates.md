@@ -104,7 +104,7 @@ The LLM does NOT extract these — they come directly from the client request.)
 
 - **Intent Type**: READ
 - **Confidence Threshold Override**: 70 (default)
-- **Description**: The user wants to see the current league standings for a specific season. Returns a ranked list of teams with match statistics.
+- **Description**: The user wants to see the current league standings for a specific season. Returns a ranked list of pairs with match statistics.
 - **Example Messages**:
   - "show me the standings"
   - "what are the current standings for season 3?"
@@ -129,7 +129,7 @@ The LLM does NOT extract these — they come directly from the client request.)
 - **Description**: The user wants to view the profile and current registration details of a specific player.
 - **Example Messages**:
   - "show me John's profile"
-  - "what team is player_456 on?"
+  - "what pair is player_456 on?"
   - "tell me about Sarah"
 
 ### Request Parameters
@@ -298,8 +298,8 @@ Describe every external backend GET endpoint the chat-to-intent server may call 
   "standings": [
     {
       "rank": "integer",
-      "team_id": "string",
-      "team_name": "string",
+      "pair_id": "string",
+      "pair_name": "string",
       "played": "integer",
       "won": "integer",
       "drawn": "integer",

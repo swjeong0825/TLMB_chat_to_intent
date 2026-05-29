@@ -7,7 +7,7 @@ class SubmitMatchResultHandler(BaseIntentHandler):
     """
     Write intent handler for SUBMIT_MATCH_RESULT.
     Assembles a prefilled payload for POST /leagues/{league_id}/matches.
-    No supplementary GET calls needed — the backend auto-registers new players/teams.
+    No supplementary GET calls needed — the backend auto-registers new players/pairs.
 
     RosterMembershipRequiredError (HTTP 422) handling note:
     When LeagueRules.auto_register_players_on_match=false, the backend returns
@@ -24,43 +24,43 @@ class SubmitMatchResultHandler(BaseIntentHandler):
 
     async def handle(self, params: ResolvedParams, host_token: str | None) -> ChatResponse:
         league_id = params.get_str("league_id")
-        t1p1 = params.get_str("team1_player1_nickname")
-        t1p2 = params.get_str("team1_player2_nickname")
-        t2p1 = params.get_str("team2_player1_nickname")
-        t2p2 = params.get_str("team2_player2_nickname")
-        team1_score = params.get_str("team1_score")
-        team2_score = params.get_str("team2_score")
+        t1p1 = params.get_str("pair1_player1_nickname")
+        t1p2 = params.get_str("pair1_player2_nickname")
+        t2p1 = params.get_str("pair2_player1_nickname")
+        t2p2 = params.get_str("pair2_player2_nickname")
+        pair1_score = params.get_str("pair1_score")
+        pair2_score = params.get_str("pair2_score")
 
         server_message = params.issues_summary()
 
-        if not _is_valid_score(team1_score):
-            team1_score = None
+        if not _is_valid_score(pair1_score):
+            pair1_score = None
             server_message = _append_issue(
                 server_message,
-                "team1_score: expected a non-negative integer string — field left empty",
+                "pair1_score: expected a non-negative integer string — field left empty",
             )
-        if not _is_valid_score(team2_score):
-            team2_score = None
+        if not _is_valid_score(pair2_score):
+            pair2_score = None
             server_message = _append_issue(
                 server_message,
-                "team2_score: expected a non-negative integer string — field left empty",
+                "pair2_score: expected a non-negative integer string — field left empty",
             )
 
         url = f"{self._backend_base_url}/leagues/{league_id}/matches"
 
         body = {
-            "team1_nicknames": _field(
+            "pair1_nicknames": _field(
                 "array[string]",
                 True,
                 [t1p1, t1p2] if t1p1 and t1p2 else None,
             ),
-            "team2_nicknames": _field(
+            "pair2_nicknames": _field(
                 "array[string]",
                 True,
                 [t2p1, t2p2] if t2p1 and t2p2 else None,
             ),
-            "team1_score": _field("string", True, team1_score),
-            "team2_score": _field("string", True, team2_score),
+            "pair1_score": _field("string", True, pair1_score),
+            "pair2_score": _field("string", True, pair2_score),
         }
 
         return ChatResponse(

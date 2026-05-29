@@ -110,8 +110,8 @@ class EditMatchScoreHandler(BaseIntentHandler):
                 "player_filters": nicknames,
                 "matches": filtered,
                 "body_schema": {
-                    "team1_score": {"type": "string", "required": True},
-                    "team2_score": {"type": "string", "required": True},
+                    "pair1_score": {"type": "string", "required": True},
+                    "pair2_score": {"type": "string", "required": True},
                 },
             },
             server_message=server_message,
@@ -139,10 +139,10 @@ def _collect_nicknames(params: ResolvedParams, max_count: int) -> list[str]:
 
 def _match_contains_all(match: dict, nicknames: list[str]) -> bool:
     in_match = {
-        (match.get("team1_player1_nickname") or "").lower(),
-        (match.get("team1_player2_nickname") or "").lower(),
-        (match.get("team2_player1_nickname") or "").lower(),
-        (match.get("team2_player2_nickname") or "").lower(),
+        (match.get("pair1_player1_nickname") or "").lower(),
+        (match.get("pair1_player2_nickname") or "").lower(),
+        (match.get("pair2_player1_nickname") or "").lower(),
+        (match.get("pair2_player2_nickname") or "").lower(),
     }
     in_match.discard("")
     requested = {n.lower() for n in nicknames}

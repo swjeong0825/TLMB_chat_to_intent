@@ -24,9 +24,9 @@ class GetRosterHandler(BaseIntentHandler):
             )
 
         players = response.body.get("players", [])
-        teams = response.body.get("teams", [])
+        pairs = response.body.get("pairs", [])
         return ChatResponse(
             data_type="GET_ROSTER",
-            data={"league_id": league_id, "players": players, "teams": teams},
+            data={"league_id": league_id, "players": players, "pairs": pairs},
             server_message="",
         )

@@ -64,16 +64,16 @@ async def seeded_league(league_id: str, host_token: str) -> None:
     """
     Seeds the test league with two matches and a few pre-registered roster players.
 
-    Submitting matches auto-creates all players and teams, so this produces:
+    Submitting matches auto-creates all players and pairs, so this produces:
       Players (from matches) : Alice, Bob, Charlie, Diana, Emma, John
-      Teams                  : Alice/Bob, Charlie/Diana, Emma/John
+      Pairs                  : Alice/Bob, Charlie/Diana, Emma/John
       Matches                : Alice/Bob vs Charlie/Diana (6-3),
                                Alice/Bob vs Emma/John (6-4)
 
     Roster pre-registered (no matches yet): alex, daniel, jason
     (The add is idempotent — 409 on duplicate is silently ignored.)
 
-    Tests that assert specific players, teams, or matches exist should declare
+    Tests that assert specific players, pairs, or matches exist should declare
     this fixture as a dependency. It runs once per session.
     """
     backend_url = get_settings().backend_base_url
@@ -81,19 +81,19 @@ async def seeded_league(league_id: str, host_token: str) -> None:
         await backend.post(
             f"/leagues/{league_id}/matches",
             json={
-                "team1_nicknames": ["Alice", "Bob"],
-                "team2_nicknames": ["Charlie", "Diana"],
-                "team1_score": "6",
-                "team2_score": "3",
+                "pair1_nicknames": ["Alice", "Bob"],
+                "pair2_nicknames": ["Charlie", "Diana"],
+                "pair1_score": "6",
+                "pair2_score": "3",
             },
         )
         await backend.post(
             f"/leagues/{league_id}/matches",
             json={
-                "team1_nicknames": ["Alice", "Bob"],
-                "team2_nicknames": ["Emma", "John"],
-                "team1_score": "6",
-                "team2_score": "4",
+                "pair1_nicknames": ["Alice", "Bob"],
+                "pair2_nicknames": ["Emma", "John"],
+                "pair1_score": "6",
+                "pair2_score": "4",
             },
         )
         # Seed pre-registered roster players — ignore 409 (already exists) so

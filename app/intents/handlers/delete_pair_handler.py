@@ -4,15 +4,15 @@ from app.intents.base_intent_handler import BaseIntentHandler
 from app.ports.read_only_backend_gateway import ReadOnlyBackendGateway
 
 
-class DeleteTeamHandler(BaseIntentHandler):
+class DeletePairHandler(BaseIntentHandler):
     """
-    Write intent handler for DELETE_TEAM.
+    Write intent handler for DELETE_PAIR.
 
-    Supplementary GET: GET /leagues/{league_id}/roster to resolve team_id from both player nicknames.
-    Target: DELETE /admin/leagues/{league_id}/teams/{team_id}
+    Supplementary GET: GET /leagues/{league_id}/roster to resolve pair_id from both player nicknames.
+    Target: DELETE /admin/leagues/{league_id}/pairs/{pair_id}
 
     No request body — DELETE operation.
-    Team lookup is case-insensitive and considers both player orderings within the team.
+    Pair lookup is case-insensitive and considers both player orderings within the pair.
     """
 
     def __init__(self, gateway: ReadOnlyBackendGateway, backend_base_url: str) -> None:
@@ -30,41 +30,41 @@ class DeleteTeamHandler(BaseIntentHandler):
         if not roster_response.is_success:
             return ChatResponse.error(
                 502,
-                f"Could not fetch roster to resolve team: backend returned status "
+                f"Could not fetch roster to resolve pair: backend returned status "
                 f"{roster_response.status_code}",
             )
 
-        team_id = _resolve_team_id(roster_response.body, player1, player2)
-        if team_id is None:
+        pair_id = _resolve_pair_id(roster_response.body, player1, player2)
+        if pair_id is None:
             return ChatResponse.error(
                 502,
-                f"No team found with players '{player1}' and '{player2}' in the league roster.",
+                f"No pair found with players '{player1}' and '{player2}' in the league roster.",
             )
 
         server_message = params.issues_summary()
         if not server_message.strip():
             server_message = (
-                "Note: the team must have no associated match records before deletion. "
+                "Note: the pair must have no associated match records before deletion. "
                 "Delete all related matches first if needed."
             )
 
-        url = f"{self._backend_base_url}/admin/leagues/{league_id}/teams/{team_id}"
+        url = f"{self._backend_base_url}/admin/leagues/{league_id}/pairs/{pair_id}"
 
         return ChatResponse(
-            data_type="DELETE_TEAM",
+            data_type="DELETE_PAIR",
             data={"method": "DELETE", "url": url, "body": {}},
             server_message=server_message,
         )
 
 
-def _resolve_team_id(body: dict, player1: str | None, player2: str | None) -> str | None:
-    teams: list[dict] = body.get("teams", [])
+def _resolve_pair_id(body: dict, player1: str | None, player2: str | None) -> str | None:
+    pairs: list[dict] = body.get("pairs", [])
     requested = {(player1 or "").lower(), (player2 or "").lower()}
 
-    for team in teams:
-        p1 = (team.get("player1_nickname") or "").lower()
-        p2 = (team.get("player2_nickname") or "").lower()
+    for pair in pairs:
+        p1 = (pair.get("player1_nickname") or "").lower()
+        p2 = (pair.get("player2_nickname") or "").lower()
         if requested == {p1, p2}:
-            return team.get("team_id")
+            return pair.get("pair_id")
 
     return None

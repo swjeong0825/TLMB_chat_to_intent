@@ -19,16 +19,16 @@ def test_submit_match_partial_extraction_passes_validation() -> None:
     params = ResolvedParams()
 
     extracted = {
-        "team1_player1_nickname": "Jae",
-        "team1_player2_nickname": None,
-        "team2_player1_nickname": "DK",
-        "team2_player2_nickname": None,
-        "team1_score": "6",
-        "team2_score": "4",
+        "pair1_player1_nickname": "Jae",
+        "pair1_player2_nickname": None,
+        "pair2_player1_nickname": "DK",
+        "pair2_player2_nickname": None,
+        "pair1_score": "6",
+        "pair2_score": "4",
     }
     validator.validate(intent, extracted, params)
 
-    assert params.get_str("team1_player1_nickname") == "Jae"
-    assert params.get_str("team1_player2_nickname") is None
-    assert params.get_str("team2_player1_nickname") == "DK"
-    assert params.get_str("team2_score") == "4"
+    assert params.get_str("pair1_player1_nickname") == "Jae"
+    assert params.get_str("pair1_player2_nickname") is None
+    assert params.get_str("pair2_player1_nickname") == "DK"
+    assert params.get_str("pair2_score") == "4"

@@ -12,7 +12,7 @@ class DeleteMatchHandler(BaseIntentHandler):
     Target: DELETE /admin/leagues/{league_id}/matches/{match_id}
 
     No request body — DELETE operation.
-    Match lookup is case-insensitive and considers both player orderings within each team pair.
+    Match lookup is case-insensitive and considers both player orderings within each pair.
     """
 
     def __init__(self, gateway: ReadOnlyBackendGateway, backend_base_url: str) -> None:
@@ -21,10 +21,10 @@ class DeleteMatchHandler(BaseIntentHandler):
 
     async def handle(self, params: ResolvedParams, host_token: str | None) -> ChatResponse:
         league_id = params.get_str("league_id")
-        t1p1 = params.get_str("team1_player1_nickname")
-        t1p2 = params.get_str("team1_player2_nickname")
-        t2p1 = params.get_str("team2_player1_nickname")
-        t2p2 = params.get_str("team2_player2_nickname")
+        t1p1 = params.get_str("pair1_player1_nickname")
+        t1p2 = params.get_str("pair1_player2_nickname")
+        t2p1 = params.get_str("pair2_player1_nickname")
+        t2p2 = params.get_str("pair2_player2_nickname")
 
         matches_response = await self._gateway.get(
             f"/leagues/{league_id}/matches", auth_token=host_token
@@ -84,18 +84,18 @@ def _matches_four_players(
     t2p1: str | None,
     t2p2: str | None,
 ) -> bool:
-    mt1p1 = (match.get("team1_player1_nickname") or "").lower()
-    mt1p2 = (match.get("team1_player2_nickname") or "").lower()
-    mt2p1 = (match.get("team2_player1_nickname") or "").lower()
-    mt2p2 = (match.get("team2_player2_nickname") or "").lower()
+    mt1p1 = (match.get("pair1_player1_nickname") or "").lower()
+    mt1p2 = (match.get("pair1_player2_nickname") or "").lower()
+    mt2p1 = (match.get("pair2_player1_nickname") or "").lower()
+    mt2p2 = (match.get("pair2_player2_nickname") or "").lower()
 
-    req_team1 = {(t1p1 or "").lower(), (t1p2 or "").lower()}
-    req_team2 = {(t2p1 or "").lower(), (t2p2 or "").lower()}
-    match_team1 = {mt1p1, mt1p2}
-    match_team2 = {mt2p1, mt2p2}
+    req_pair1 = {(t1p1 or "").lower(), (t1p2 or "").lower()}
+    req_pair2 = {(t2p1 or "").lower(), (t2p2 or "").lower()}
+    match_pair1 = {mt1p1, mt1p2}
+    match_pair2 = {mt2p1, mt2p2}
 
-    return (req_team1 == match_team1 and req_team2 == match_team2) or (
-        req_team1 == match_team2 and req_team2 == match_team1
+    return (req_pair1 == match_pair1 and req_pair2 == match_pair2) or (
+        req_pair1 == match_pair2 and req_pair2 == match_pair1
     )
 
 

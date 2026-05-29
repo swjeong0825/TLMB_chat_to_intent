@@ -12,7 +12,7 @@
 
 - **Intent Type**: READ
 - **Confidence Threshold Override**: 70 (default)
-- **Description**: The user wants to see the current win/loss standings for all teams in the league, ranked by wins.
+- **Description**: The user wants to see the current win/loss standings for all pairs in the league, ranked by wins.
 - **Example Messages**:
   - "show me the standings"
   - "who's winning the league?"
@@ -58,12 +58,12 @@
 
 - **Intent Type**: READ
 - **Confidence Threshold Override**: 70 (default)
-- **Description**: The user wants to see the list of all registered players and teams in the league.
+- **Description**: The user wants to see the list of all registered players and pairs in the league.
 - **Example Messages**:
   - "show me all the players"
   - "who's in the league?"
   - "show me the roster"
-  - "list all teams"
+  - "list all pairs"
   - "who are the registered players?"
 
 ### Request Parameters
@@ -82,7 +82,7 @@
 
 - **Intent Type**: WRITE
 - **Confidence Threshold Override**: 75
-- **Description**: The user wants to record a doubles match result. They describe which two players were on each team and what the score was. New players and teams are automatically registered if they haven't played before.
+- **Description**: The user wants to record a doubles match result. They describe which two players were on each pair and what the score was. New players and pairs are automatically registered if they haven't played before.
 - **Example Messages**:
   - "Alice and Bob beat Charlie and Diana 6 to 3"
   - "record a match: John and Sarah vs Mike and Emma, 7-5"
@@ -99,12 +99,12 @@
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| team1_player1_nickname | string | Yes | Nickname of the first player on team 1. |
-| team1_player2_nickname | string | Yes | Nickname of the second player on team 1. |
-| team2_player1_nickname | string | Yes | Nickname of the first player on team 2. |
-| team2_player2_nickname | string | Yes | Nickname of the second player on team 2. |
-| team1_score | string | Yes | Score for team 1 as a non-negative integer string (e.g. "6"). The winning team's score is typically higher. |
-| team2_score | string | Yes | Score for team 2 as a non-negative integer string (e.g. "3"). |
+| pair1_player1_nickname | string | Yes | Nickname of the first player on pair 1. |
+| pair1_player2_nickname | string | Yes | Nickname of the second player on pair 1. |
+| pair2_player1_nickname | string | Yes | Nickname of the first player on pair 2. |
+| pair2_player2_nickname | string | Yes | Nickname of the second player on pair 2. |
+| pair1_score | string | Yes | Score for pair 1 as a non-negative integer string (e.g. "6"). The winning pair's score is typically higher. |
+| pair2_score | string | Yes | Score for pair 2 as a non-negative integer string (e.g. "3"). |
 
 ---
 
@@ -164,7 +164,7 @@
 ### Notes
 
 - All four `playerN_nickname` params are individually optional, but the handler returns an `ERROR` response if zero nicknames are extracted.
-- Filtering is case-insensitive and uses ALL semantics: a match is returned only if every mentioned nickname is among the match's four nicknames (in either team, in either ordering).
+- Filtering is case-insensitive and uses ALL semantics: a match is returned only if every mentioned nickname is among the match's four nicknames (in either pair, in either ordering).
 - An empty result is NOT an error — the response carries `matches: []` and a `server_message` that explains the ALL semantics so the user understands.
 - The user enters the corrected scores in the form rendered for the selected row; the client then `PATCH`es the URL produced by the handler — one of two routes, picked per-role at chat-response time:
   - Admin chat request (`X-Host-Token` present) → `/admin/leagues/{league_id}/matches/{match_id}` (no window check; requires `X-Host-Token`).
@@ -178,7 +178,7 @@
 
 - **Intent Type**: WRITE
 - **Confidence Threshold Override**: 85
-- **Description**: The admin/host wants to permanently delete a match record from the league. The match is identified by the four player nicknames across both teams.
+- **Description**: The admin/host wants to permanently delete a match record from the league. The match is identified by the four player nicknames across both pairs.
 - **Example Messages**:
   - "delete the match between Alice/Bob and Charlie/Diana"
   - "remove the match where John and Sarah played Mike and Emma"
@@ -195,23 +195,23 @@
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| team1_player1_nickname | string | Yes | First player of team 1 — used together with the other three nicknames to identify the match in history. |
-| team1_player2_nickname | string | Yes | Second player of team 1 — used to identify the match. |
-| team2_player1_nickname | string | Yes | First player of team 2 — used to identify the match. |
-| team2_player2_nickname | string | Yes | Second player of team 2 — used to identify the match. |
+| pair1_player1_nickname | string | Yes | First player of pair 1 — used together with the other three nicknames to identify the match in history. |
+| pair1_player2_nickname | string | Yes | Second player of pair 1 — used to identify the match. |
+| pair2_player1_nickname | string | Yes | First player of pair 2 — used to identify the match. |
+| pair2_player2_nickname | string | Yes | Second player of pair 2 — used to identify the match. |
 
 ---
 
-## Intent: DELETE_TEAM
+## Intent: DELETE_PAIR
 
 - **Intent Type**: WRITE
 - **Confidence Threshold Override**: 85
-- **Description**: The admin/host wants to permanently delete a team from the league roster. The team is identified by its two player nicknames. The team must have no associated match records before it can be deleted.
+- **Description**: The admin/host wants to permanently delete a pair from the league roster. The pair is identified by its two player nicknames. The pair must have no associated match records before it can be deleted.
 - **Example Messages**:
-  - "delete the team Alice and Bob"
-  - "remove Alice and Bob's team from the league"
-  - "delete the team formed by John and Sarah"
-  - "get rid of Mike and Emma's team"
+  - "delete the pair Alice and Bob"
+  - "remove Alice and Bob's pair from the league"
+  - "delete the pair formed by John and Sarah"
+  - "get rid of Mike and Emma's pair"
 
 ### Request Parameters
 
@@ -224,8 +224,8 @@
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| player1_nickname | string | Yes | Nickname of the first player in the team to delete. Used together with player2_nickname to look up the team_id. |
-| player2_nickname | string | Yes | Nickname of the second player in the team to delete. |
+| player1_nickname | string | Yes | Nickname of the first player in the pair to delete. Used together with player2_nickname to look up the pair_id. |
+| player2_nickname | string | Yes | Nickname of the second player in the pair to delete. |
 
 ---
 
@@ -261,7 +261,7 @@
 
 - **Intent Type**: WRITE
 - **Confidence Threshold Override**: 80
-- **Description**: The admin/host wants to remove a pre-registered player from the league's roster. The DELETE only succeeds when the player has no teams and no matches; otherwise the backend returns 409 `PlayerHasParticipationError`. Replaces v5's `REMOVE_ALLOWLIST_ENTRY`; the legacy "allowlist" wording is still accepted.
+- **Description**: The admin/host wants to remove a pre-registered player from the league's roster. The DELETE only succeeds when the player has no pairs and no matches; otherwise the backend returns 409 `PlayerHasParticipationError`. Replaces v5's `REMOVE_ALLOWLIST_ENTRY`; the legacy "allowlist" wording is still accepted.
 - **Example Messages**:
   - "remove Michael from the roster"
   - "drop Ryan from the roster"

@@ -13,7 +13,7 @@ class RemovePlayerFromRosterHandler(BaseIntentHandler):
     Target: DELETE /admin/leagues/{league_id}/players/{player_id}
 
     Backend semantics: the DELETE only succeeds when the player has zero
-    teams AND zero matches — otherwise the backend returns 409
+    pairs AND zero matches — otherwise the backend returns 409
     PlayerHasParticipationError. We do not preflight-check participation
     here; the form just dispatches the DELETE and the frontend renders the
     409 if it comes back.

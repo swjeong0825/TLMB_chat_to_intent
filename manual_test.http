@@ -197,13 +197,13 @@ X-Host-Token: {{host_token}}
 
 ###
 
-### DELETE_TEAM — identify team by both player nicknames
+### DELETE_PAIR — identify pair by both player nicknames
 POST {{baseUrl}}/leagues/{{league_id}}/chat
 Content-Type: application/json
 X-Host-Token: {{host_token}}
 
 {
-  "client_message": "Remove the team Alice and Bob from the league",
+  "client_message": "Remove the pair Alice and Bob from the league",
   "last_server_message": ""
 }
 

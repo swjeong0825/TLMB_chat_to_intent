@@ -20,18 +20,18 @@
 
 | Field Name      | Type          | Required | Enum Options | Resolved from (intent param name)                                     |
 | --------------- | ------------- | -------- | ------------ | --------------------------------------------------------------------- |
-| team1_nicknames | array[string] | Yes      | —            | [team1_player1_nickname, team1_player2_nickname] assembled by handler |
-| team2_nicknames | array[string] | Yes      | —            | [team2_player1_nickname, team2_player2_nickname] assembled by handler |
-| team1_score     | string        | Yes      | —            | team1_score                                                           |
-| team2_score     | string        | Yes      | —            | team2_score                                                           |
+| pair1_nicknames | array[string] | Yes      | —            | [pair1_player1_nickname, pair1_player2_nickname] assembled by handler |
+| pair2_nicknames | array[string] | Yes      | —            | [pair2_player1_nickname, pair2_player2_nickname] assembled by handler |
+| pair1_score     | string        | Yes      | —            | pair1_score                                                           |
+| pair2_score     | string        | Yes      | —            | pair2_score                                                           |
 
 
 ### Notes
 
-- `team1_nicknames` and `team2_nicknames` are two-element string arrays. The handler assembles each array from the two separate chat-driven nickname parameters: `team1_nicknames = [team1_player1_nickname, team1_player2_nickname]` and `team2_nicknames = [team2_player1_nickname, team2_player2_nickname]`. The `value` in the prefilled payload should be the assembled array.
+- `pair1_nicknames` and `pair2_nicknames` are two-element string arrays. The handler assembles each array from the two separate chat-driven nickname parameters: `pair1_nicknames = [pair1_player1_nickname, pair1_player2_nickname]` and `pair2_nicknames = [pair2_player1_nickname, pair2_player2_nickname]`. The `value` in the prefilled payload should be the assembled array.
 - Scores must be non-negative integer strings (e.g. `"6"`, `"3"`). If an extracted score cannot be confirmed as a valid non-negative integer string, leave the `value` as `null` and record the issue in `server_message`.
-- The backend will auto-register any new players and teams on first submission. No pre-validation of player existence is needed.
-- The backend enforces a one-team-per-player rule: a player may only be a member of one team per league (TeamConflictError → 409). This constraint cannot be pre-validated at this layer; it will surface as a backend error after the client submits the form.
+- The backend will auto-register any new players and pairs on first submission. No pre-validation of player existence is needed.
+- The backend enforces a one-pair-per-player rule: a player may only be a member of one pair per league (PairConflictError → 409). This constraint cannot be pre-validated at this layer; it will surface as a backend error after the client submits the form.
 
 ---
 
@@ -91,8 +91,8 @@ The handler picks the `url_template` based on whether the chat request carried `
     "player_filters": ["Alice", "Bob"],
     "matches": [ /* ... */ ],
     "body_schema": {
-      "team1_score": { "type": "string", "required": true },
-      "team2_score": { "type": "string", "required": true }
+      "pair1_score": { "type": "string", "required": true },
+      "pair2_score": { "type": "string", "required": true }
     }
   },
   "server_message": "Showing matches that contain ALL of: Alice, Bob. Pick one to edit its score."
@@ -112,18 +112,18 @@ The handler picks the `url_template` based on whether the chat request carried `
     "matches": [
       {
         "match_id": "<uuid>",
-        "team1_player1_nickname": "Alice",
-        "team1_player2_nickname": "Bob",
-        "team2_player1_nickname": "Charlie",
-        "team2_player2_nickname": "Diana",
-        "team1_score": 6,
-        "team2_score": 3,
+        "pair1_player1_nickname": "Alice",
+        "pair1_player2_nickname": "Bob",
+        "pair2_player1_nickname": "Charlie",
+        "pair2_player2_nickname": "Diana",
+        "pair1_score": 6,
+        "pair2_score": 3,
         "created_at": "2026-04-12T10:23:00Z"
       }
     ],
     "body_schema": {
-      "team1_score": { "type": "string", "required": true },
-      "team2_score": { "type": "string", "required": true }
+      "pair1_score": { "type": "string", "required": true },
+      "pair2_score": { "type": "string", "required": true }
     }
   },
   "server_message": "Showing matches that contain ALL of: Alice, Bob. Pick one to edit its score."
@@ -144,8 +144,8 @@ The handler picks the `url_template` based on whether the chat request carried `
 
 | Field Name  | Type   | Required | Enum Options | Resolved from                                                                |
 | ----------- | ------ | -------- | ------------ | ---------------------------------------------------------------------------- |
-| team1_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team1_score`). |
-| team2_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `team2_score`). |
+| pair1_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `pair1_score`). |
+| pair2_score | string | Yes      | —            | User input in the prefilled form (initial value = match's current `pair2_score`). |
 
 ### Authorization (admin URL vs. player URL — chosen at the chat layer)
 
@@ -186,7 +186,7 @@ Why split the URLs at the chat layer instead of having one URL with a server-sid
 | URL Path Param | Resolved from (intent param name)                                                                                                                                        |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | league_id      | league_id                                                                                                                                                                |
-| match_id       | Resolved by handler: GET /leagues/{league_id}/matches → match all four player nicknames (case-insensitive, either player ordering within each team) → extract `match_id` |
+| match_id       | Resolved by handler: GET /leagues/{league_id}/matches → match all four player nicknames (case-insensitive, either player ordering within each pair) → extract `match_id` |
 
 
 ### Request Body Fields
@@ -195,18 +195,18 @@ Why split the URLs at the chat layer instead of having one URL with a server-sid
 
 ### Notes
 
-- The `match_id` path parameter is resolved by the handler via GET /leagues/{league_id}/matches. Find the match whose four player nicknames match all of `team1_player1_nickname`, `team1_player2_nickname`, `team2_player1_nickname`, `team2_player2_nickname` (case-insensitive; player order within each team pair is not guaranteed to be consistent).
+- The `match_id` path parameter is resolved by the handler via GET /leagues/{league_id}/matches. Find the match whose four player nicknames match all of `pair1_player1_nickname`, `pair1_player2_nickname`, `pair2_player1_nickname`, `pair2_player2_nickname` (case-insensitive; player order within each pair is not guaranteed to be consistent).
 - If no match is found, return an ERROR response (status_code 502).
 - If multiple matches exist for the same player combination, surface this as ambiguity in `server_message` and use the most recent one (highest `created_at`).
 - This is a destructive, irreversible operation. The threshold is set to 85 to reduce the chance of acting on ambiguous user intent.
-- After a match is deleted, if its associated team(s) have no remaining match records, the host may then delete those teams via DELETE_TEAM.
+- After a match is deleted, if its associated pair(s) have no remaining match records, the host may then delete those pairs via DELETE_PAIR.
 
 ---
 
-## Intent: DELETE_TEAM
+## Intent: DELETE_PAIR
 
 - **HTTP Method**: DELETE
-- **URL Pattern**: /admin/leagues/{league_id}/teams/{team_id}
+- **URL Pattern**: /admin/leagues/{league_id}/pairs/{pair_id}
 
 ### Path Parameter Mapping
 
@@ -214,7 +214,7 @@ Why split the URLs at the chat layer instead of having one URL with a server-sid
 | URL Path Param | Resolved from (intent param name)                                                                                                                              |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | league_id      | league_id                                                                                                                                                      |
-| team_id        | Resolved by handler: GET /leagues/{league_id}/roster → match both player nicknames (case-insensitive, in either order) in the `teams` list → extract `team_id` |
+| pair_id        | Resolved by handler: GET /leagues/{league_id}/roster → match both player nicknames (case-insensitive, in either order) in the `pairs` list → extract `pair_id` |
 
 
 ### Request Body Fields
@@ -223,10 +223,10 @@ Why split the URLs at the chat layer instead of having one URL with a server-sid
 
 ### Notes
 
-- The `team_id` path parameter is resolved by the handler via GET /leagues/{league_id}/roster. Find the team where both `player1_nickname` and `player2_nickname` match `player1_nickname` and `player2_nickname` from the intent params (case-insensitive, considering either ordering).
-- If no matching team is found, return an ERROR response (status_code 502).
+- The `pair_id` path parameter is resolved by the handler via GET /leagues/{league_id}/roster. Find the pair where both `player1_nickname` and `player2_nickname` match `player1_nickname` and `player2_nickname` from the intent params (case-insensitive, considering either ordering).
+- If no matching pair is found, return an ERROR response (status_code 502).
 - This is a destructive, irreversible operation. The threshold is set to 85.
-- The backend rejects team deletion if the team still has associated match records (TeamHasMatchesError → 409). The host must delete all associated matches first. This precondition cannot be pre-validated at this layer — the frontend will receive a 409 error if the team has remaining matches. The handler may optionally note this precondition in `server_message`.
+- The backend rejects pair deletion if the pair still has associated match records (PairHasMatchesError → 409). The host must delete all associated matches first. This precondition cannot be pre-validated at this layer — the frontend will receive a 409 error if the pair has remaining matches. The handler may optionally note this precondition in `server_message`.
 
 ---
 
@@ -274,6 +274,5 @@ Why split the URLs at the chat layer instead of having one URL with a server-sid
 ### Notes
 
 - Supplementary GET: `GET /leagues/{league_id}/roster`. The handler resolves `player_id` from the spoken nickname. If the nickname is not found on the roster, the handler returns `CLARIFICATION_QUESTION` listing the actual roster nicknames so the host can pick the correct one.
-- Replaces v5's `REMOVE_ALLOWLIST_ENTRY`. The backend's `DELETE /admin/leagues/{league_id}/players/{player_id}` is **hard-delete with a participation guard**: it only succeeds when the player has zero teams AND zero matches. Otherwise the backend returns 409 `PlayerHasParticipationError` with the participation counts; the frontend renders this as a user-facing message (it cannot be pre-validated at this layer).
+- Replaces v5's `REMOVE_ALLOWLIST_ENTRY`. The backend's `DELETE /admin/leagues/{league_id}/players/{player_id}` is **hard-delete with a participation guard**: it only succeeds when the player has zero pairs AND zero matches. Otherwise the backend returns 409 `PlayerHasParticipationError` with the participation counts; the frontend renders this as a user-facing message (it cannot be pre-validated at this layer).
 - The "remove from allowlist" wording is intentionally retained in `example_messages` so existing user phrasing still routes here.
-

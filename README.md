@@ -55,12 +55,12 @@ Chat-to-Intent Server (this)
 |---|---|---|---|
 | `GET_STANDINGS` | READ | 70 | Show current win/loss standings |
 | `GET_MATCH_HISTORY` | READ | 70 | Show list of recorded match results |
-| `GET_ROSTER` | READ | 70 | Show all registered players and teams |
+| `GET_ROSTER` | READ | 70 | Show all registered players and pairs |
 | `SUBMIT_MATCH_RESULT` | WRITE | 75 | Record a doubles match result (auto-registers new players) |
 | `EDIT_PLAYER_NICKNAME` | WRITE | 80 | Correct a player's nickname (admin) |
 | `EDIT_MATCH_SCORE` | WRITE | 65 | Correct a match score (host always; players within a configurable window) — picker flow: user mentions 1-4 player nicknames to narrow candidate matches |
 | `DELETE_MATCH` | WRITE | 85 | Delete a match record (admin, destructive) |
-| `DELETE_TEAM` | WRITE | 85 | Delete a team from the roster (admin, destructive) |
+| `DELETE_PAIR` | WRITE | 85 | Delete a pair from the roster (admin, destructive) |
 
 If the LLM confidence score is below the intent's threshold, the server returns a `CLARIFICATION_QUESTION` response. The clarification loop is unbounded server-side; the client decides when to cap it.
 
@@ -147,4 +147,4 @@ TEST_LEAGUE_ID=<uuid of a freshly created league>
 TEST_HOST_TOKEN=<host_token returned when the league was created>
 ```
 
-The test suite seeds all required match, player, and team data automatically.
+The test suite seeds all required match, player, and pair data automatically.
